@@ -38,13 +38,13 @@ namespace fix
     }
 
     template<class RefTagNo, class ...Tags>
-    const List<RefTagNo, Tags...>::DataTuple &List<RefTagNo, Tags...>::at(size_t _idx) const
+    constexpr const List<RefTagNo, Tags...>::DataTuple &List<RefTagNo, Tags...>::at(size_t _idx) const
     {
         return m_data.at(_idx);
     }
 
     template<class RefTagNo, class ...Tags>
-    List<RefTagNo, Tags...>::DataTuple &List<RefTagNo, Tags...>::at(size_t _idx)
+    constexpr List<RefTagNo, Tags...>::DataTuple &List<RefTagNo, Tags...>::at(size_t _idx)
     {
         return m_data.at(_idx);
     }
@@ -53,6 +53,30 @@ namespace fix
     constexpr size_t List<RefTagNo, Tags...>::size() const
     {
         return m_data.size();
+    }
+
+    template<class RefTagNo, class ...Tags>
+    List<RefTagNo, Tags...>::iterator List<RefTagNo, Tags...>::begin()
+    {
+        return m_data.begin();
+    }
+
+    template<class RefTagNo, class ...Tags>
+    List<RefTagNo, Tags...>::iterator List<RefTagNo, Tags...>::end()
+    {
+        return m_data.end();
+    }
+
+    template<class RefTagNo, class ...Tags>
+    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::cbegin() const
+    {
+        return m_data.begin();
+    }
+
+    template<class RefTagNo, class ...Tags>
+    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::cend() const
+    {
+        return m_data.end();
     }
 
     template<class RefTagNo, class ...Tags>
@@ -85,7 +109,7 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    inline bool List<RefTagNo, Tags...>::try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value)
+    bool List<RefTagNo, Tags...>::try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value)
     {
         if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
             if constexpr (IsOptional<typename Tag::ValueType>) {
@@ -106,7 +130,7 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    inline void List<RefTagNo, Tags...>::verify_required_tag(const std::set<std::string> &_set)
+    void List<RefTagNo, Tags...>::verify_required_tag(const std::set<std::string> &_set)
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))
@@ -117,7 +141,7 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    inline void List<RefTagNo, Tags...>::to_string_tag(std::stringstream &_stream, const DataTuple &_tuple)
+    void List<RefTagNo, Tags...>::to_string_tag(std::stringstream &_stream, const DataTuple &_tuple)
     {
         if constexpr (IsOptional<typename Tag::ValueType>) {
             const typename Tag::ValueType &tag = get<Tag::tag>(_tuple).Value;

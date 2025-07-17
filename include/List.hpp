@@ -20,6 +20,10 @@ namespace fix
             using DataTuple = std::tuple<Tags...>;
             using TagNoType = RefTagNo;
 
+            using DataContainer = std::vector<DataTuple>;
+            using iterator = DataContainer::iterator;
+            using const_iterator = DataContainer::const_iterator;
+
             TagNoType TagNo;
 
             void from_string(const MapMessage &_mapmsg, size_t &_pos);
@@ -28,24 +32,28 @@ namespace fix
 
             void add(DataTuple &&_data);
 
-            inline const DataTuple &at(size_t _idx) const;
-            inline DataTuple &at(size_t _idx);
+            constexpr const DataTuple &at(size_t _idx) const;
+            constexpr DataTuple &at(size_t _idx);
 
             constexpr size_t size() const;
 
+            iterator begin();
+            iterator end();
+
+            const_iterator cbegin() const;
+            const_iterator cend() const;
+
         private:
             void internal_from_string(const MapMessage &_mapmsg, size_t &_pos);
-
             template<class Tag, class ...RemainTag>
             inline bool try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value);
-
             template<class Tag, class ...RemainTag>
-            inline void verify_required_tag(const std::set<std::string> &_set);
+            inline static void verify_required_tag(const std::set<std::string> &_set);
 
             template<class Tag, class ...RemainTag>
             inline void to_string_tag(std::stringstream &_stream, const DataTuple &_tuple);
 
-            std::vector<DataTuple> m_data;
+            DataContainer m_data;
     };
 
     template<fix::TagName Name, IsTagTuple DataTuple>
