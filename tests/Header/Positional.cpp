@@ -48,7 +48,8 @@ TEST_F(Header_positional_insert, wrong_order_first)
     Header header{};
 
     try {
-        header.try_insert(Tag2, value1);
+        // fix the void result
+        (void)header.try_insert(Tag2, value1);
     } catch (const fix::RejectException &_reject) {
         EXPECT_STREQ(_reject.reason(), "Invalid positional tag");
         EXPECT_STREQ(_reject.what(), fix::RejectException::InvalidTag);
@@ -76,7 +77,8 @@ TEST_F(Header_positional_insert, wrong_order_second)
         FAIL() << _exception.what();
     }
     try {
-        header.try_insert(Tag3, value2);
+        // fix the void result
+        (void)header.try_insert(Tag3, value2);
     } catch (const fix::RejectException &_reject) {
         EXPECT_STREQ(_reject.reason(), "Invalid positional tag");
         EXPECT_STREQ(_reject.what(), fix::RejectException::InvalidTag);
