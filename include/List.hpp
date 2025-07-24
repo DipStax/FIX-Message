@@ -1,8 +1,6 @@
 #pragma once
 
-#include <set>
-#include <sstream>
-#include <iomanip>
+#include <unordered_set>
 
 #include "meta/concept.hpp"
 #include "Tag.hpp"
@@ -32,23 +30,23 @@ namespace fix
 
             void add(DataTuple &&_data);
 
-            constexpr const DataTuple &at(size_t _idx) const;
-            constexpr DataTuple &at(size_t _idx);
+            [[nodiscard]] constexpr const DataTuple &at(size_t _idx) const;
+            [[nodiscard]] constexpr DataTuple &at(size_t _idx);
 
-            constexpr size_t size() const;
+            [[nodiscard]] constexpr size_t size() const;
 
-            iterator begin();
-            iterator end();
+            [[nodiscard]] iterator begin();
+            [[nodiscard]] iterator end();
 
-            const_iterator cbegin() const;
-            const_iterator cend() const;
+            [[nodiscard]] const_iterator cbegin() const;
+            [[nodiscard]] const_iterator cend() const;
 
         private:
             void internal_from_string(const MapMessage &_mapmsg, size_t &_pos);
             template<class Tag, class ...RemainTag>
             inline bool try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value);
             template<class Tag, class ...RemainTag>
-            inline static void verify_required_tag(const std::set<std::string> &_set);
+            inline static void verify_required_tag(const std::unordered_set<std::string> &_set);
 
             template<class Tag, class ...RemainTag>
             inline void to_string_tag(std::stringstream &_stream, const DataTuple &_tuple);

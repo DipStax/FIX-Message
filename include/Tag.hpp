@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 #include "meta/concept.hpp"
 #include "meta/using.hpp"
 

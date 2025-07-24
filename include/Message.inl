@@ -1,11 +1,15 @@
+#include <sstream>
+#include <iomanip>
+
 #include "Message.hpp"
+#include "TagValueConvertor.hpp"
 
 namespace fix
 {
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     void Message<MsgType, fix::TagList<TagLists...>, Tags...>::from_string(const MapMessage &_mapmsg)
     {
-        std::set<std::string> set_tag{};
+        std::unordered_set<std::string> set_tag{};
 
         for (size_t it = 0; it < _mapmsg.size(); it++) {
             const std::pair<std::string, std::string> &pair = _mapmsg.at(it);
@@ -140,7 +144,7 @@ namespace fix
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     template<class Tag, class ...RemainTag>
-    void Message<MsgType, fix::TagList<TagLists...>, Tags...>::verify_required_tag(const std::set<std::string> &_set)
+    void Message<MsgType, fix::TagList<TagLists...>, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))

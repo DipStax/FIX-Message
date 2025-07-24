@@ -1,12 +1,16 @@
+#include <sstream>
+#include <iomanip>
+
 #include "List.hpp"
 #include "Exception.hpp"
+#include "TagValueConvertor.hpp"
 
 namespace fix
 {
     template<class RefTagNo, class ...Tags>
     void List<RefTagNo, Tags...>::from_string(const MapMessage &_mapmsg, size_t &_pos)
     {
-        std::set<std::string> set_tag{};
+        std::unordered_set<std::string> set_tag{};
         size_t nelem = 0;
 
         if constexpr (IsOptional<typename TagNoType::ValueType>) {
@@ -86,7 +90,7 @@ namespace fix
 
         while (!stop && _pos < _mapmsg.size()) {
             DataTuple tuple{};
-            std::set<std::string> set_tag{};
+            std::unordered_set<std::string> set_tag{};
 
             for (; _pos < _mapmsg.size(); _pos++) {
                 const std::pair<std::string, std::string> &pair = _mapmsg.at(_pos);
@@ -130,7 +134,7 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    void List<RefTagNo, Tags...>::verify_required_tag(const std::set<std::string> &_set)
+    void List<RefTagNo, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))

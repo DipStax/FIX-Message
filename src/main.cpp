@@ -1,7 +1,16 @@
 #include <iostream>
 
-constexpr const char Tag[] = "1";
-constexpr const char Tag2[] = "1";
+#include "List.hpp"
+
+constexpr const char TagNo[] = "1";
+constexpr const char Tag1[] = "2";
+constexpr const char Tag2[] = "3";
+
+using List = fix::List<
+    fix::TagNo<TagNo, false>,
+    fix::Tag<Tag1, int>,
+    fix::Tag<Tag2, std::string>
+>;
 
 // using List = fix::List<fix::TagNo<Tag, false>, fix::Tag<Tag2, int>>;
 
@@ -33,6 +42,20 @@ constexpr const char Tag2[] = "1";
 
 int main()
 {
+    List list{};
+
+    List::DataTuple data{};
+
+    fix::get<Tag1>(data).Value = 2;
+    fix::get<Tag2>(data).Value = "value";
+
+    list.add(std::move(data));
+
+    for (List::DataTuple &_data : list) {
+        std::cout << fix::get<Tag1>(_data).Value << std::endl;
+        std::cout << fix::get<Tag2>(_data).Value << std::endl;
+    }
+
     // fix::Logon logon{};
 
     // std::vector<std::pair<std::string, std::string>> data;
