@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(fix_test LANGUAGES CXX)
+project(FIX_Message LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,15 +15,6 @@ file(GLOB SRSC_fix
 )
 
 add_library(fix_message STATIC ${SRSC_fix})
-
-
-
-
-add_executable(main src/main.cpp)
-target_link_libraries(main PRIVATE fix_message)
-
-
-
 
 enable_testing()
 
@@ -41,12 +32,12 @@ file(GLOB_RECURSE SRC_Tests
     tests/**.cpp
 )
 
-add_executable(test_message
+add_executable(fix_message_test
     ${SRC_Tests}
 )
-target_include_directories(test_message PRIVATE include)
-target_include_directories(test_message PRIVATE test)
+target_include_directories(fix_message_test PRIVATE include)
+target_include_directories(fix_message_test PRIVATE test)
 
-target_link_libraries(test_message fix_message GTest::gtest_main)
+target_link_libraries(fix_message_test fix_message GTest::gtest_main)
 
-gtest_discover_tests(test_message)
+gtest_discover_tests(fix_message_test)

@@ -190,7 +190,7 @@ make
 2. **Run unit tests:**
 
 ```sh
-./test_message
+./fix_message_test
 ```
 
 ## Requirements
