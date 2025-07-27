@@ -50,6 +50,7 @@ TEST_F(List_serialization_nooptional, single_list)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 
+    stream << std::fixed << std::setprecision(4);
     list.to_string(stream);
     EXPECT_EQ(stream.str(), result);
 }
@@ -101,6 +102,7 @@ TEST_F(List_serialization_nooptional, multi_list)
         + std::format("{}={}\1", Tag5, value2_5);
 
 
+    stream << std::fixed << std::setprecision(4);
     list.to_string(stream);
     EXPECT_EQ(stream.str(), result);
 }
@@ -189,6 +191,7 @@ TEST_F(List_serialization_optional, multi_list_withvalue)
         + std::format("{}={}\1", Tag1, value2_1)
         + std::format("{}={:.4f}\1", Tag3, value2_3);
 
+    stream << std::fixed << std::setprecision(4);
     list.to_string(stream);
     EXPECT_EQ(stream.str(), result);
 }

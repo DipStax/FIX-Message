@@ -29,7 +29,6 @@ namespace fix
     template<class RefTagNo, class ...Tags>
     void List<RefTagNo, Tags...>::to_string(std::stringstream &_stream)
     {
-        _stream << std::fixed << std::setprecision(4);
         _stream << TagNoType::tag << "=" << m_data.size() << "\1";
         for (const DataTuple &_tuple : m_data)
         to_string_tag<Tags...>(_stream, _tuple);
