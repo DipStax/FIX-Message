@@ -99,7 +99,7 @@ namespace fix
                 if (_value.empty())
                     get<Tag::tag>().Value = std::nullopt;
                 else
-                    error = TagConvertor_value(_value, get<Tag::tag>().Value.value());
+                    error = TagConvertor(_value, get<Tag::tag>().Value.value());
             } else {
                 if (_value.empty())
                     return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
