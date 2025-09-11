@@ -31,11 +31,7 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
 file(GLOB_RECURSE SRC_Tests
-    tests/src/Header/NonPositional.cpp
-    tests/src/Header/Positional.cpp
-    tests/src/Header/Serialization.cpp
-    tests/src/main.cpp
-    tests/src/TagConvertor.cpp
+    tests/src/**.cpp
 )
 
 add_executable(fix_message_test

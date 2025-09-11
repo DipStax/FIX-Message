@@ -1,3 +1,5 @@
+#include "TagConvertor.hpp"
+
 #include "Message.hpp"
 
 #include <gtest/gtest.h>
@@ -18,19 +20,14 @@ TEST_F(UnknowTag_standard_tag, unknown_tag)
     const std::string value = "error";
     fix::MapMessage map_msg;
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(UnknownTag, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (const fix::RejectException &_reject) {
-        EXPECT_STREQ(_reject.reason(), "Unknown tag");
-        EXPECT_STREQ(_reject.what(), fix::RejectException::UndefineTag);
-        SUCCEED();
-        return;
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
-    FAIL() << "Expected an reject exception";
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_TRUE(reject.has_value());
+    EXPECT_STREQ(reject.value().Message.c_str(), "Unknown tag");
+    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::UndefineTag);
 }
 
 class UnknownTag_list_tag : public testing::Test
@@ -56,18 +53,13 @@ TEST_F(UnknownTag_list_tag, unknown_tag)
     const std::string value = "error";
     fix::MapMessage map_msg;
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(TagNo, value_no);
     map_msg.emplace_back(UnknownTag, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (const fix::RejectException &_reject) {
-        EXPECT_STREQ(_reject.reason(), "Unknown tag");
-        EXPECT_STREQ(_reject.what(), fix::RejectException::UndefineTag);
-        SUCCEED();
-        return;
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
-    FAIL() << "Expected an reject exception";
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_TRUE(reject.has_value());
+    EXPECT_STREQ(reject.value().Message.c_str(), "Unknown tag");
+    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::UndefineTag);
 }

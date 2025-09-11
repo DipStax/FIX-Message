@@ -3,6 +3,8 @@
 #include <unordered_set>
 
 #include "meta/concept.hpp"
+#include "Expected.hpp"
+#include "RejectError.hpp"
 #include "Tag.hpp"
 
 namespace fix
@@ -24,7 +26,7 @@ namespace fix
 
             TagNoType TagNo;
 
-            void from_string(const MapMessage &_mapmsg, size_t &_pos);
+            std::optional<RejectError> from_string(const MapMessage &_mapmsg, size_t &_pos);
 
             void to_string(std::stringstream &_stream);
 
@@ -42,11 +44,11 @@ namespace fix
             [[nodiscard]] const_iterator cend() const;
 
         private:
-            void internal_from_string(const MapMessage &_mapmsg, size_t &_pos);
+            std::optional<RejectError> internal_from_string(const MapMessage &_mapmsg, size_t &_pos);
             template<class Tag, class ...RemainTag>
-            inline bool try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value);
+            inline xstd::Expected<bool, RejectError> try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value);
             template<class Tag, class ...RemainTag>
-            inline static void verify_required_tag(const std::unordered_set<std::string> &_set);
+            inline static std::optional<RejectError> verify_required_tag(const std::unordered_set<std::string> &_set);
 
             template<class Tag, class ...RemainTag>
             inline void to_string_tag(std::stringstream &_stream, const DataTuple &_tuple);

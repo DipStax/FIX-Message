@@ -1,3 +1,5 @@
+#include "TagConvertor.hpp"
+
 #include "Message.hpp"
 
 #include <gtest/gtest.h>
@@ -23,19 +25,14 @@ TEST_F(Group_required, invalid_empty)
     const std::string value = "";
     fix::MapMessage map_msg;
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(TagNo, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (fix::RejectException &_reject) {
-        EXPECT_STREQ(_reject.reason(), "Expected a value for required No Tag");
-        EXPECT_STREQ(_reject.what(), fix::RejectException::ReqTagMissing);
-        SUCCEED();
-        return;
-    } catch (std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
-    FAIL() << "Expected an reject exception";
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_TRUE(reject.has_value());
+    EXPECT_STREQ(reject.value().Message.c_str(), "Expected a value for required No Tag");
+    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ReqTagMissing);
 }
 
 TEST_F(Group_required, invalid_zero)
@@ -43,19 +40,14 @@ TEST_F(Group_required, invalid_zero)
     const std::string value = "0";
     fix::MapMessage map_msg;
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(TagNo, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (fix::RejectException &_reject) {
-        EXPECT_STREQ(_reject.reason(), "Invalid value for required No Tag");
-        EXPECT_STREQ(_reject.what(), fix::RejectException::ValueOORange);
-        SUCCEED();
-        return;
-    } catch (std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
-    FAIL() << "Expected an reject exception";
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_TRUE(reject.has_value());
+    EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for required No Tag");
+    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
 }
 
 TEST_F(Group_required, invalid_negative)
@@ -63,19 +55,14 @@ TEST_F(Group_required, invalid_negative)
     const std::string value = "-1";
     fix::MapMessage map_msg;
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(TagNo, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (fix::RejectException &_reject) {
-        EXPECT_STREQ(_reject.reason(), "Invalid value for required No Tag");
-        EXPECT_STREQ(_reject.what(), fix::RejectException::ValueOORange);
-        SUCCEED();
-        return;
-    } catch (std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
-    FAIL() << "Expected an reject exception";
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_TRUE(reject.has_value());
+    EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for required No Tag");
+    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
 }
 
 class Group_optional : public testing::Test
@@ -99,15 +86,12 @@ TEST_F(Group_optional, valid_tagno_zero)
     const std::string value = "0";
     fix::MapMessage map_msg{};
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(TagNo, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_FALSE(real_message.getList<TagNo>().TagNo.Value.has_value());
 }
 
@@ -117,15 +101,12 @@ TEST_F(Group_optional, valid_tagno_empty)
     const std::string value = "";
     fix::MapMessage map_msg{};
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(TagNo, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_FALSE(real_message.getList<TagNo>().TagNo.Value.has_value());
 }
 
@@ -134,17 +115,12 @@ TEST_F(Group_optional, invalid_negative)
     const std::string value = "-1";
     fix::MapMessage map_msg{};
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(TagNo, value);
-    try {
-        real_message.from_string(map_msg);
-    } catch (fix::RejectException &_reject) {
-        EXPECT_STREQ(_reject.reason(), "Invalid value for optional No Tag");
-        EXPECT_STREQ(_reject.what(), fix::RejectException::ValueOORange);
-        SUCCEED();
-        return;
-    } catch (std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
-    FAIL() << "Expected an reject exception";
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_TRUE(reject.has_value());
+    EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for optional No Tag");
+    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
 }

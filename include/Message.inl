@@ -2,14 +2,14 @@
 #include <iomanip>
 
 #include "Message.hpp"
-#include "TagValueConvertor.hpp"
 
 namespace fix
 {
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
-    void Message<MsgType, fix::TagList<TagLists...>, Tags...>::from_string(const MapMessage &_mapmsg)
+    std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::from_string(const MapMessage &_mapmsg)
     {
         std::unordered_set<std::string> set_tag{};
+        std::optional<RejectError> reject;
 
         for (size_t it = 0; it < _mapmsg.size(); it++) {
             const std::pair<std::string, std::string> &pair = _mapmsg.at(it);
@@ -17,19 +17,30 @@ namespace fix
             const std::string &value = pair.second;
 
             if constexpr (sizeof...(Tags) > 0) {
-                if (!try_insert<Tags...>(key, value)) {
-                    try_insert_tagno(key, value, _mapmsg, it);
+                xstd::Expected<bool, RejectError> error = try_insert<Tags...>(key, value);
+
+                if (error.has_value()) {
+                    if (!error.value()) {
+                        reject = try_insert_tagno(key, value, _mapmsg, it);
+                        if (reject.has_value())
+                            return reject.value();
+                    } else {
+                        if (set_tag.contains(key))
+                            return RejectError{ RejectError::InvalidTag, "Duplicate tag value" };
+                        set_tag.emplace(key);
+                    }
                 } else {
-                    if (set_tag.contains(key))
-                        throw RejectException("Duplicate tag value", RejectException::InvalidTag);
-                    set_tag.emplace(key);
+                    return error.error();
                 }
             } else {
-                try_insert_tagno(key, value, _mapmsg, it);
+                reject = try_insert_tagno(key, value, _mapmsg, it);
+                if (reject.has_value())
+                    return reject.value();
             }
         }
         if constexpr (sizeof...(Tags) > 0)
-            verify_required_tag<Tags...>(set_tag);
+            return verify_required_tag<Tags...>(set_tag);
+        return std::nullopt;
     }
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
@@ -79,16 +90,23 @@ namespace fix
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     template<class Tag, class ...RemainTag>
-    bool Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert(const std::string &_key, const std::string &_value)
+    xstd::Expected<bool, RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert(const std::string &_key, const std::string &_value)
     {
         if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+            std::optional<RejectError> error;
+
             if constexpr (IsOptional<typename Tag::ValueType>) {
-                get<Tag::tag>().Value = TagValueConvertorOptional<typename Tag::ValueType::value_type>(_value);
+                if (_value.empty())
+                    get<Tag::tag>().Value = std::nullopt;
+                else
+                    error = TagConvertor_value(_value, get<Tag::tag>().Value.value());
             } else {
                 if (_value.empty())
-                    throw RejectException("Expected a value", RejectException::EmptyValue);
-                get<Tag::tag>().Value = TagValueConvertor<typename Tag::ValueType>(_value);
+                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
+                error = TagConvertor(_value, get<Tag::tag>().Value);
             }
+            if (error.has_value())
+                return xstd::Unexpected<RejectError>(error.value());
             return true;
         }
         if constexpr (sizeof...(RemainTag) != 0) {
@@ -99,20 +117,27 @@ namespace fix
     }
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
-    void Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert_tagno(const std::string &_key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
+    std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert_tagno(const std::string &_key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
     {
         if constexpr (sizeof...(TagLists) > 0) {
-            if (!is_reftagno<TagLists...>(_key, _value, _mapmsg, _it))
-                throw RejectException("Unknown tag", RejectException::UndefineTag);
+            xstd::Expected<bool, RejectError> error = is_reftagno<TagLists...>(_key, _value, _mapmsg, _it);
+
+            if (error.has_value()) {
+                if (!error.value())
+                    return RejectError{ RejectError::UndefineTag, "Unknown tag" };
+            } else {
+                return error.error();
+            }
             _it--;
         } else {
-            throw RejectException("Unknown tag", RejectException::UndefineTag);
+            return RejectError{ RejectError::UndefineTag, "Unknown tag" };
         }
+        return std::nullopt;
     }
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     template<class TagList, class ...RemainTagList>
-    bool Message<MsgType, fix::TagList<TagLists...>, Tags...>::is_reftagno(const std::string &_key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
+    xstd::Expected<bool, RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::is_reftagno(const std::string &_key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
     {
         if (std::strcmp(TagList::tagno, _key.c_str()) != 0) {
             if constexpr (sizeof...(RemainTagList) != 0)
@@ -122,35 +147,52 @@ namespace fix
         }
 
         TagList &taglist = std::get<TagList>(m_taglists);
+        std::optional<RejectError> error = std::nullopt;
 
         if constexpr (IsOptional<typename TagList::TagNoType::ValueType>) {
-            taglist.TagNo.Value = TagValueConvertorOptional<int>(_value);
+            if (_value.empty()) {
+                taglist.TagNo.Value = std::nullopt;
+            } else {
+                typename TagList::TagNoType::ValueType::value_type value;
+
+                error = TagConvertor(_value, value);
+                if (!error.has_value())
+                    taglist.TagNo.Value = value;
+            }
+        } else {
+            if (_value.empty())
+               return xstd::Unexpected<RejectError>({ RejectError::ReqTagMissing, "Expected a value for required No Tag" });
+            error = TagConvertor(_value, taglist.TagNo.Value);
+        }
+        if (error.has_value())
+            return xstd::Unexpected<RejectError>(error.value());
+        if constexpr (IsOptional<typename TagList::TagNoType::ValueType>) {
             if (taglist.TagNo.Value.has_value()) {
                 if (taglist.TagNo.Value.value() < 0)
-                    throw RejectException("Invalid value for optional No Tag", RejectException::ValueOORange);
+                    return xstd::Unexpected<RejectError>({ RejectError::ValueOORange, "Invalid value for optional No Tag" });
                 if (taglist.TagNo.Value.value() == 0)
                     taglist.TagNo.Value = std::nullopt;
             }
         } else {
-            if (_value.empty())
-                throw RejectException("Expected a value for required No Tag", RejectException::ReqTagMissing);
-            taglist.TagNo.Value = TagValueConvertor<int>(_value);
             if (taglist.TagNo.Value <= 0)
-                throw RejectException("Invalid value for required No Tag", RejectException::ValueOORange);
+                return xstd::Unexpected<RejectError>({ RejectError::ValueOORange, "Invalid value for required No Tag" });
         }
-        taglist.from_string(_mapmsg, ++_it);
+        error = taglist.from_string(_mapmsg, ++_it);
+        if (error.has_value())
+            return xstd::Unexpected<RejectError>(error.value());
         return true;
     }
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     template<class Tag, class ...RemainTag>
-    void Message<MsgType, fix::TagList<TagLists...>, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
+    std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))
-                throw RejectException("Missing required tag", RejectException::ReqTagMissing);
+                return RejectError{ RejectError::ReqTagMissing, "Missing required tag" };
         if constexpr (sizeof...(RemainTag) > 0)
-            verify_required_tag<RemainTag...>(_set);
+            return verify_required_tag<RemainTag...>(_set);
+        return std::nullopt;
     }
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>

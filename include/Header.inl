@@ -98,7 +98,7 @@ namespace fix
                         error = TagConvertor(_value, tag.first.Value.value());
                 } else {
                     if (_value.empty())
-                        return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", });
+                        return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
                     error = TagConvertor(_value, tag.first.Value);
                 }
                 if (error.has_value())

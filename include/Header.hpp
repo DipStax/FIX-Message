@@ -48,9 +48,9 @@ namespace fix
             [[nodiscard]] constexpr const std::pair<Tag, bool> &internal_getPositional() const;
 
             template<class Tag, class ...RemainTag>
-            inline xstd::Expected<bool, RejectError> try_insert_positional(const std::string &_key, const std::string &_value);
+            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_positional(const std::string &_key, const std::string &_value);
             template<class Tag, class ...RemainTag>
-            inline xstd::Expected<bool, RejectError> try_insert_nonpositional(const std::string &_key, const std::string _value);
+            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_nonpositional(const std::string &_key, const std::string _value);
 
             template<class Tag, class ...RemainTag>
             inline void to_string_positional(std::stringstream &_stream) const;

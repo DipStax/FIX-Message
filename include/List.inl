@@ -2,16 +2,16 @@
 #include <iomanip>
 
 #include "List.hpp"
-#include "Exception.hpp"
-#include "TagValueConvertor.hpp"
+#include "RejectError.hpp"
 
 namespace fix
 {
     template<class RefTagNo, class ...Tags>
-    void List<RefTagNo, Tags...>::from_string(const MapMessage &_mapmsg, size_t &_pos)
+    std::optional<RejectError> List<RefTagNo, Tags...>::from_string(const MapMessage &_mapmsg, size_t &_pos)
     {
         std::unordered_set<std::string> set_tag{};
         size_t nelem = 0;
+        std::optional<RejectError> reject = std::nullopt;
 
         if constexpr (IsOptional<typename TagNoType::ValueType>) {
             if (TagNo.Value.has_value())
@@ -21,9 +21,12 @@ namespace fix
         } else {
             nelem = TagNo.Value;
         }
-        internal_from_string(_mapmsg, _pos);
+        reject = internal_from_string(_mapmsg, _pos);
+        if (reject.has_value())
+            return reject.value();
         if (m_data.size() != nelem)
-            throw RejectException("Wrong number of element", RejectException::ValueOORange);
+            return RejectError{ RejectError::ValueOORange, "Wrong number of element" };
+        return std::nullopt;
     }
 
     template<class RefTagNo, class ...Tags>
@@ -83,9 +86,11 @@ namespace fix
     }
 
     template<class RefTagNo, class ...Tags>
-    void List<RefTagNo, Tags...>::internal_from_string(const MapMessage &_mapmsg, size_t &_pos)
+    std::optional<RejectError> List<RefTagNo, Tags...>::internal_from_string(const MapMessage &_mapmsg, size_t &_pos)
     {
         bool stop = false;
+        xstd::Expected<bool, RejectError> expected{false};
+        std::optional<RejectError> reject;
 
         while (!stop && _pos < _mapmsg.size()) {
             DataTuple tuple{};
@@ -96,32 +101,52 @@ namespace fix
                 const std::string &key = pair.first;
                 const std::string &value = pair.second;
 
-                if (set_tag.contains(key)) {
+                if (set_tag.contains(key))
                     break;
-                } else if (try_insert<Tags...>(tuple, key, value)) {
-                    set_tag.insert(key);
+                expected = try_insert<Tags...>(tuple, key, value);
+                if (expected.has_value()) {
+                    if (expected.value()) {
+                        set_tag.insert(key);
+                    } else {
+                        stop = true;
+                        break;
+                    }
                 } else {
-                    stop = true;
-                    break;
+                    return expected.error();
                 }
             }
-            verify_required_tag<Tags...>(set_tag);
+            reject = verify_required_tag<Tags...>(set_tag);
+            if (reject.has_value())
+                return reject.value();
             m_data.push_back(std::move(tuple));
         }
+        return std::nullopt;
     }
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    bool List<RefTagNo, Tags...>::try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value)
+    xstd::Expected<bool, RejectError> List<RefTagNo, Tags...>::try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value)
     {
         if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+            std::optional<RejectError> error = std::nullopt;
+
             if constexpr (IsOptional<typename Tag::ValueType>) {
-                std::get<Tag>(_tuple).Value = TagValueConvertorOptional<typename Tag::ValueType::value_type>(_value);
+                if (_value.empty()) {
+                    std::get<Tag>(_tuple).Value = std::nullopt;
+                } else {
+                    typename Tag::ValueType::value_type value;
+
+                    error = TagConvertor(_value, value);
+                    if (!error.has_value())
+                        std::get<Tag>(_tuple).Value = value;
+                }
             } else {
                 if (_value.empty())
-                    throw RejectException("Expected a value", RejectException::EmptyValue);
-                std::get<Tag>(_tuple).Value = TagValueConvertor<typename Tag::ValueType>(_value);
+                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
+                error = TagConvertor(_value, std::get<Tag>(_tuple).Value);
             }
+            if (error.has_value())
+                return xstd::Unexpected<RejectError>(error.value());
             return true;
         }
         if constexpr (sizeof...(RemainTag) != 0) {
@@ -133,13 +158,15 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    void List<RefTagNo, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
+    std::optional<RejectError> List<RefTagNo, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))
-                throw RejectException("Missing required tag", RejectException::ReqTagMissing);
+                return RejectError{ RejectError::ReqTagMissing, "Missing required tag" };
         if constexpr (sizeof...(RemainTag) > 0)
-            verify_required_tag<RemainTag...>(_set);
+            return verify_required_tag<RemainTag...>(_set);
+        else
+            return std::nullopt;
     }
 
     template<class RefTagNo, class ...Tags>
