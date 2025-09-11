@@ -34,6 +34,7 @@ TEST_F(List_missing_required, empty_list)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Missing required tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ReqTagMissing);
+    EXPECT_STREQ(reject.value().Tag.c_str(), Tag1);
 }
 
 TEST_F(List_missing_required, second_missing)
@@ -56,4 +57,5 @@ TEST_F(List_missing_required, second_missing)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Missing required tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ReqTagMissing);
+    EXPECT_STREQ(reject.value().Tag.c_str(), Tag1);
 }

@@ -28,6 +28,7 @@ TEST_F(UnknowTag_standard_tag, unknown_tag)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Unknown tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::UndefineTag);
+    EXPECT_STREQ(reject.value().Tag.c_str(), UnknownTag);
 }
 
 class UnknownTag_list_tag : public testing::Test
@@ -62,4 +63,5 @@ TEST_F(UnknownTag_list_tag, unknown_tag)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Unknown tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::UndefineTag);
+    EXPECT_STREQ(reject.value().Tag.c_str(), UnknownTag);
 }

@@ -25,7 +25,7 @@ namespace fix
         if (reject.has_value())
             return reject.value();
         if (m_data.size() != nelem)
-            return RejectError{ RejectError::ValueOORange, "Wrong number of element" };
+            return RejectError{ RejectError::ValueOORange, "Wrong number of element", TagNoType::tag };
         return std::nullopt;
     }
 
@@ -142,11 +142,13 @@ namespace fix
                 }
             } else {
                 if (_value.empty())
-                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
+                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", Tag::tag });
                 error = TagConvertor(_value, std::get<Tag>(_tuple).Value);
             }
-            if (error.has_value())
+            if (error.has_value()) {
+                error.value().Tag = Tag::tag;
                 return xstd::Unexpected<RejectError>(error.value());
+            }
             return true;
         }
         if constexpr (sizeof...(RemainTag) != 0) {
@@ -162,7 +164,7 @@ namespace fix
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))
-                return RejectError{ RejectError::ReqTagMissing, "Missing required tag" };
+                return RejectError{ RejectError::ReqTagMissing, "Missing required tag", Tag::tag };
         if constexpr (sizeof...(RemainTag) > 0)
             return verify_required_tag<RemainTag...>(_set);
         else

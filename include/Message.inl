@@ -26,7 +26,7 @@ namespace fix
                             return reject.value();
                     } else {
                         if (set_tag.contains(key))
-                            return RejectError{ RejectError::InvalidTag, "Duplicate tag value" };
+                            return RejectError{ RejectError::InvalidTag, "Duplicate tag value", key };
                         set_tag.emplace(key);
                     }
                 } else {
@@ -96,17 +96,24 @@ namespace fix
             std::optional<RejectError> error;
 
             if constexpr (IsOptional<typename Tag::ValueType>) {
-                if (_value.empty())
+                if (_value.empty()) {
                     get<Tag::tag>().Value = std::nullopt;
-                else
-                    error = TagConvertor(_value, get<Tag::tag>().Value.value());
+                } else {
+                    typename Tag::ValueType::value_type value;
+
+                    error = TagConvertor(_value, value);
+                    if (!error.has_value())
+                        get<Tag::tag>().Value = value;
+                }
             } else {
                 if (_value.empty())
-                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
+                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", Tag::tag });
                 error = TagConvertor(_value, get<Tag::tag>().Value);
             }
-            if (error.has_value())
+            if (error.has_value()) {
+                error.value().Tag = Tag::tag;
                 return xstd::Unexpected<RejectError>(error.value());
+            }
             return true;
         }
         if constexpr (sizeof...(RemainTag) != 0) {
@@ -124,13 +131,13 @@ namespace fix
 
             if (error.has_value()) {
                 if (!error.value())
-                    return RejectError{ RejectError::UndefineTag, "Unknown tag" };
+                    return RejectError{ RejectError::UndefineTag, "Unknown tag", _key };
             } else {
                 return error.error();
             }
             _it--;
         } else {
-            return RejectError{ RejectError::UndefineTag, "Unknown tag" };
+            return RejectError{ RejectError::UndefineTag, "Unknown tag", _key };
         }
         return std::nullopt;
     }
@@ -161,21 +168,23 @@ namespace fix
             }
         } else {
             if (_value.empty())
-               return xstd::Unexpected<RejectError>({ RejectError::ReqTagMissing, "Expected a value for required No Tag" });
+               return xstd::Unexpected<RejectError>({ RejectError::ReqTagMissing, "Expected a value for required No Tag", TagList::tagno });
             error = TagConvertor(_value, taglist.TagNo.Value);
         }
-        if (error.has_value())
+        if (error.has_value()) {
+            error.value().Tag = TagList::tagno;
             return xstd::Unexpected<RejectError>(error.value());
+        }
         if constexpr (IsOptional<typename TagList::TagNoType::ValueType>) {
             if (taglist.TagNo.Value.has_value()) {
                 if (taglist.TagNo.Value.value() < 0)
-                    return xstd::Unexpected<RejectError>({ RejectError::ValueOORange, "Invalid value for optional No Tag" });
+                    return xstd::Unexpected<RejectError>({ RejectError::ValueOORange, "Invalid value for optional No Tag", TagList::tagno });
                 if (taglist.TagNo.Value.value() == 0)
                     taglist.TagNo.Value = std::nullopt;
             }
         } else {
             if (taglist.TagNo.Value <= 0)
-                return xstd::Unexpected<RejectError>({ RejectError::ValueOORange, "Invalid value for required No Tag" });
+                return xstd::Unexpected<RejectError>({ RejectError::ValueOORange, "Invalid value for required No Tag", TagList::tagno });
         }
         error = taglist.from_string(_mapmsg, ++_it);
         if (error.has_value())
@@ -189,7 +198,7 @@ namespace fix
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))
-                return RejectError{ RejectError::ReqTagMissing, "Missing required tag" };
+                return RejectError{ RejectError::ReqTagMissing, "Missing required tag", Tag::tag };
         if constexpr (sizeof...(RemainTag) > 0)
             return verify_required_tag<RemainTag...>(_set);
         return std::nullopt;

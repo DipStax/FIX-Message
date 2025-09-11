@@ -17,5 +17,6 @@ namespace fix
 
         std::string Reason;
         std::string Message;
+        std::string Tag;
     };
 }
