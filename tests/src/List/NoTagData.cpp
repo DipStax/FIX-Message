@@ -33,6 +33,7 @@ TEST_F(Group_required, invalid_empty)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Expected a value for required No Tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ReqTagMissing);
+    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
 }
 
 TEST_F(Group_required, invalid_zero)
@@ -48,6 +49,7 @@ TEST_F(Group_required, invalid_zero)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for required No Tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
+    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
 }
 
 TEST_F(Group_required, invalid_negative)
@@ -63,6 +65,7 @@ TEST_F(Group_required, invalid_negative)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for required No Tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
+    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
 }
 
 class Group_optional : public testing::Test
@@ -123,4 +126,5 @@ TEST_F(Group_optional, invalid_negative)
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for optional No Tag");
     EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
+    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
 }

@@ -103,15 +103,17 @@ namespace fix
                     }
                 } else {
                     if (_value.empty())
-                        return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
+                        return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", Tag::tag });
                     error = TagConvertor(_value, tag.first.Value);
                 }
-                if (error.has_value())
+                if (error.has_value()) {
+                    error.value().Tag = Tag::tag;
                     return xstd::Unexpected<RejectError>(error.value());
+                }
                 tag.second = true;
                 return true;
             }
-            return xstd::Unexpected<RejectError>({ RejectError::InvalidTag, "Invalid positional tag" });
+            return xstd::Unexpected<RejectError>({ RejectError::InvalidTag, "Invalid positional tag", Tag::tag });
         }
         if constexpr (sizeof...(RemainTag) > 0) {
             return try_insert_positional<RemainTag...>(_key, _value);
@@ -139,11 +141,13 @@ namespace fix
                 }
             } else {
                 if (_value.empty())
-                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", });
+                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", Tag::tag });
                 error = TagConvertor(_value, get<Tag::tag>().Value);
             }
-            if (error.has_value())
+            if (error.has_value()) {
+                error.value().Tag = Tag::tag;
                 return xstd::Unexpected<RejectError>(error.value());
+            }
             return true;
         }
         if constexpr (sizeof...(RemainTag) > 0) {

@@ -57,6 +57,7 @@ TEST_F(Header_positional_insert, wrong_order_first)
     ASSERT_FALSE(expected.has_value());
     EXPECT_STREQ(expected.error().Message.c_str(), "Invalid positional tag");
     EXPECT_STREQ(expected.error().Reason.c_str(), fix::RejectError::InvalidTag);
+    EXPECT_STREQ(expected.error().Tag.c_str(), Tag1);
 }
 
 TEST_F(Header_positional_insert, wrong_order_second)
@@ -71,6 +72,7 @@ TEST_F(Header_positional_insert, wrong_order_second)
     ASSERT_FALSE(expected.has_value());
     EXPECT_STREQ(expected.error().Message.c_str(), "Invalid positional tag");
     EXPECT_STREQ(expected.error().Reason.c_str(), fix::RejectError::InvalidTag);
+    EXPECT_STREQ(expected.error().Tag.c_str(), Tag2);
 }
 
 TEST_F(Header_positional_insert, insert_end)
