@@ -92,10 +92,15 @@ namespace fix
                 std::optional<RejectError> error = std::nullopt;
 
                 if constexpr (IsOptional<typename Tag::ValueType>) {
-                    if (_value.empty())
+                    if (_value.empty()) {
                         tag.first.Value = std::nullopt;
-                    else
-                        error = TagConvertor(_value, tag.first.Value.value());
+                    } else {
+                        typename Tag::ValueType::value_type value{};
+
+                        error = TagConvertor(_value, value);
+                        if (!error.has_value())
+                            tag.first.Value = value;
+                    }
                 } else {
                     if (_value.empty())
                         return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value" });
@@ -123,10 +128,15 @@ namespace fix
             std::optional<RejectError> error = std::nullopt;
 
             if constexpr (IsOptional<typename Tag::ValueType>) {
-                if (_value.empty())
+                if (_value.empty()) {
                     get<Tag::tag>().Value = std::nullopt;
-                else
-                    error = TagConvertor(_value, get<Tag::tag>().Value.value());
+                } else {
+                    typename Tag::ValueType::value_type value{};
+
+                    error = TagConvertor(_value, value);
+                    if (!error.has_value())
+                        get<Tag::tag>().Value = value;
+                }
             } else {
                 if (_value.empty())
                     return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", });
