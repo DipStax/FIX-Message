@@ -1,4 +1,6 @@
-#include "Message.hpp"
+// #include "Message.hpp"
+#include "TagConvertor.hpp"
+
 #include "List.hpp"
 
 #include <gtest/gtest.h>
@@ -22,17 +24,14 @@ TEST_F(List_insert_simplecase, stop_end)
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     real_list.TagNo.Value = 1;
 
     map_msg.emplace_back(Tag1, value);
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     EXPECT_EQ(it, map_msg.size());
     ASSERT_EQ(real_list.size(), 1);
 
@@ -47,18 +46,16 @@ TEST_F(List_insert_simplecase, stop_before_end)
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     real_list.TagNo.Value = 1;
 
     map_msg.emplace_back(Tag1, value);
     map_msg.emplace_back(Tag2, value);
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     EXPECT_EQ(it, map_msg.size() - 1);
     ASSERT_EQ(real_list.size(), 1);
 
@@ -97,6 +94,7 @@ TEST_F(List_insert_allrequired, single_entry)
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     real_list.TagNo.Value = 1;
 
@@ -106,13 +104,9 @@ TEST_F(List_insert_allrequired, single_entry)
     map_msg.emplace_back(Tag4, value4);
     map_msg.emplace_back(Tag5, value5);
 
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_EQ(real_list.size(), 1);
 
     const List::DataTuple &tuple = real_list.at(0);
@@ -141,6 +135,7 @@ TEST_F(List_insert_allrequired, multi_entry)
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     real_list.TagNo.Value = 2;
 
@@ -156,13 +151,9 @@ TEST_F(List_insert_allrequired, multi_entry)
     map_msg.emplace_back(Tag4, value2_4);
     map_msg.emplace_back(Tag5, value2_5);
 
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_EQ(real_list.size(), 2);
 
     const List::DataTuple &tuple_1 = real_list.at(0);
@@ -193,6 +184,7 @@ TEST_F(List_insert_allrequired, single_entry_not_order)
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     real_list.TagNo.Value = 1;
 
@@ -202,13 +194,9 @@ TEST_F(List_insert_allrequired, single_entry_not_order)
     map_msg.emplace_back(Tag2, value2);
     map_msg.emplace_back(Tag1, value1);
 
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_EQ(real_list.size(), 1);
 
     const List::DataTuple &tuple = real_list.at(0);
@@ -236,10 +224,10 @@ class List_insert_withoptional : public testing::Test
 
 TEST_F(List_insert_withoptional, single_entry)
 {
-
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     const std::string value1 = "123456789";
     const std::string value2 = "12345.6789";
@@ -248,13 +236,9 @@ TEST_F(List_insert_withoptional, single_entry)
     map_msg.emplace_back(Tag2, value2);
 
     real_list.TagNo.Value = 1;
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_EQ(real_list.size(), 1);
 
     const List::DataTuple &tuple = real_list.at(0);
@@ -266,10 +250,10 @@ TEST_F(List_insert_withoptional, single_entry)
 
 TEST_F(List_insert_withoptional, single_entry_optional_empty)
 {
-
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     const std::string value1 = "";
     const std::string value2 = "12345.6789";
@@ -278,13 +262,9 @@ TEST_F(List_insert_withoptional, single_entry_optional_empty)
     map_msg.emplace_back(Tag2, value2);
 
     real_list.TagNo.Value = 1;
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_EQ(real_list.size(), 1);
 
     const List::DataTuple &tuple = real_list.at(0);
@@ -298,6 +278,7 @@ TEST_F(List_insert_withoptional, single_entry_optional_missing)
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     const std::string value1 = "";
     const std::string value2 = "12345.6789";
@@ -305,13 +286,9 @@ TEST_F(List_insert_withoptional, single_entry_optional_missing)
     map_msg.emplace_back(Tag2, value2);
 
     real_list.TagNo.Value = 1;
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_EQ(real_list.size(), 1);
 
     const List::DataTuple &tuple = real_list.at(0);
@@ -326,6 +303,7 @@ TEST_F(List_insert_withoptional, multi_entry)
     fix::MapMessage map_msg{};
     List real_list{};
     size_t it = 0;
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     const std::string value1_1 = "123456789";
     const std::string value1_2 = "12345.6789";
@@ -342,13 +320,9 @@ TEST_F(List_insert_withoptional, multi_entry)
     map_msg.emplace_back(Tag2, value3_2);
 
     real_list.TagNo.Value = 3;
-    try {
-        real_list.from_string(map_msg, it);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_list.from_string(map_msg, it);
+
+    ASSERT_FALSE(reject.has_value());
     ASSERT_EQ(real_list.size(), 3);
 
     const List::DataTuple &tuple1 = real_list.at(0);

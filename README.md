@@ -17,7 +17,7 @@ This C++20 library provides a type-safe, extensible framework for **serializing 
 ## Header
 
 The header is composed of 2 types of field: **positional** and **non positional**.
-The positional field are parse in order and encaplusated over `fix::PositionaTag`, if a field contain in the positional wrapper is not meet before the insertion of a **non positional** field a `fix::RejectException` is throw.
+The positional field are parse in order and encaplusated over `fix::PositionaTag`, if a field contain in the positional wrapper is not meet before the insertion of a **non positional** field a `fix::RejectError` is return.
 All the **positional** field must be required, but **non positional** can be optional.
 
 ```cpp
@@ -43,22 +43,28 @@ using Header = fix::Header<
 ```
 
 **Handling error:**
-If a field appears multiple times in the header, the library does **not** handle duplicates internally. It is up to the user to implement duplicate field handling logic externally. Same goes to a partial header, where a required field (**positional** or **non positional**) is missing, the library will **not** throw an `fix::RejectException`.
+If a field appears multiple times in the header, the library does **not** handle duplicates internally. It is up to the user to implement duplicate field handling logic externally. Same goes to a partial header, where a required field (**positional** or **non positional**) is missing, the library will **not** notify it.
 
-> In the futur a function `verify` will handle the verification of missing required field and will throw a `fix::RejectException` if missing. Nothing will be done for duplicate data (see **design note** for more information)
+> In the futur a function `verify` will handle the verification of missing required field and will return a `fix::RejectError` if missing. Nothing will be done for duplicate data (see **design note** for more information)
 
 To insert a field value into the header use the `try_insert` member function.
-It return `true` if the field is part of the header otherwise `false`, this allow to know when the header end and parse the remaining of message later.
+It return `true` as a value from the `Expected`, if the field is part of the header otherwise `false`, this allow to know when the header end and parse the remaining of message later.
+If an error occured like a unknow tag the error message will be available as "unexpected".
 
 ```cpp
 Header header{};
+xstd::Expected<bool, fix::RejectError> reject{false};
 
-header.try_insert(BeginString, "FIX4.2");           // true
-header.try_insert(BodyLength, "123");               // ...
-header.try_insert(MsgType, "E");
-header.try_insert(SenderCompID, "Sender");
+reject = header.try_insert(BeginString, "FIX4.2");           // true
+reject = header.try_insert(BodyLength, "123");               // ...
+reject = header.try_insert(MsgType, "E");
+reject = header.try_insert("UnknowTag", "value");
+
+reject.has_error();                                          // true
+
+reject = header.try_insert(SenderCompID, "Sender");
 // ...
-header.try_insert("MessageSpecificTag", "value")    // false
+reject = header.try_insert("MessageSpecificTag", "value")    // false
 ```
 
 **Design note:**
@@ -109,7 +115,7 @@ To parse the message you need to provide a `std::vector<std::pair<std::string, s
 ```cpp
 // Parse a FIX message string
 NewOrderList msg;
-msg.from_string({
+std::optional<fix::RejectError> error = msg.from_string({
     { ListId, "list_id" },
     { NoOrder, "2" },           /* No Field */
     { Symbol, "USD/EUR" },      /* list 1 */
@@ -118,6 +124,10 @@ msg.from_string({
     { OrderQty, "524.36" },     /* list 2 */
     { BidType, "1" }
 });
+
+if (error.has_value()) {
+    error.value();              // handle the error
+}
 ```
 
 To access regular field (not contained in list) you can directly use the `get<fix::TagName>` method of the message:
@@ -156,26 +166,11 @@ std::cout << msg.to_string() << std::endl;
 
 ## Tag Value Conversion
 
-The library provides functions for converting string values to C++ types, with robust error handling, wich support the following type:
-
-- `bool`, `int`, `float`, `char`, `string`: using the function:
-> Time is not currently supported, but is planned to be.
+For each type use in a message you need to have function `TagConvertor` that take a as parameter a `std::string` and a reference to the type you wan't to implement. This function will return an optional `RejectError` in case the conversion went wrong.
 
 ```cpp
-fix::TagValueConvertor<T>
+std::optional<fix::RejectError> TagConvertor(const std::string &_value, int &_out);
 ```
-
-- `std::optional<T>` of any previously mentionned type using:
-
-```cpp
-fix::TagValueConvertorOptional<T>
-```
-
-## Error Handling
-
-Invalid tag values throw `fix::RejectException` with detailed error messages and reasons.
-
-> `fix::RejectException` doesn't provide for now the field name related to the error.
 
 ## Building & Testing
 

@@ -1,3 +1,5 @@
+#include "TagConvertor.hpp"
+
 #include "Header.hpp"
 
 #include <gtest/gtest.h>
@@ -33,28 +35,32 @@ class Header_nonpositional_insert : public testing::Test
 
 TEST_F(Header_nonpositional_insert, valid)
 {
-    try {
-        ASSERT_TRUE(header.try_insert(Tag2, Value2));
-        ASSERT_TRUE(header.try_insert(Tag3, Value3));
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.reason() << ": " << _reject.what();
-    } catch (std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag2, Value2);
+
+    ASSERT_TRUE(expected.has_value());
+    ASSERT_TRUE(expected.value());
+
+    expected = header.try_insert(Tag3, Value3);
+
+    ASSERT_TRUE(expected.has_value());
+    ASSERT_TRUE(expected.value());
+
     EXPECT_EQ(header.get<Tag2>().Value, Value2);
     EXPECT_EQ(header.get<Tag3>().Value, std::stoi(Value3));
 }
 
 TEST_F(Header_nonpositional_insert, valid_not_order)
 {
-    try {
-        ASSERT_TRUE(header.try_insert(Tag3, Value3));
-        ASSERT_TRUE(header.try_insert(Tag2, Value2));
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.reason() << ": " << _reject.what();
-    } catch (std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag3, Value3);
+
+    ASSERT_TRUE(expected.has_value());
+    ASSERT_TRUE(expected.value());
+
+    expected = header.try_insert(Tag2, Value2);
+
+    ASSERT_TRUE(expected.has_value());
+    ASSERT_TRUE(expected.value());
+
     EXPECT_EQ(header.get<Tag2>().Value, Value2);
     EXPECT_EQ(header.get<Tag3>().Value, std::stoi(Value3));
 }
@@ -62,16 +68,21 @@ TEST_F(Header_nonpositional_insert, valid_not_order)
 TEST_F(Header_nonpositional_insert, insert_end)
 {
     const std::string value4 = "end";
+    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag2, Value2);
 
-    try {
-        ASSERT_TRUE(header.try_insert(Tag3, Value3));
-        ASSERT_TRUE(header.try_insert(Tag2, Value2));
-        ASSERT_FALSE(header.try_insert(Tag4, value4));
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.reason() << ": " << _reject.what();
-    } catch (std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    ASSERT_TRUE(expected.has_value());
+    ASSERT_TRUE(expected.value());
+
+    expected = header.try_insert(Tag3, Value3);
+
+    ASSERT_TRUE(expected.has_value());
+    ASSERT_TRUE(expected.value());
+
+    expected = header.try_insert(Tag4, value4);
+
+    ASSERT_TRUE(expected.has_value());
+    ASSERT_FALSE(expected.value());
+
     EXPECT_EQ(header.get<Tag2>().Value, Value2);
     EXPECT_EQ(header.get<Tag3>().Value, std::stoi(Value3));
 }

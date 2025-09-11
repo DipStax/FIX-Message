@@ -1,3 +1,5 @@
+#include "TagConvertor.hpp"
+
 #include "Message.hpp"
 
 #include <gtest/gtest.h>
@@ -29,6 +31,7 @@ TEST_F(Message_insert_allrequired, order_entry)
     const std::string value5 = "string";
     fix::MapMessage map_msg{};
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(Tag1, value1);
     map_msg.emplace_back(Tag2, value2);
@@ -36,16 +39,12 @@ TEST_F(Message_insert_allrequired, order_entry)
     map_msg.emplace_back(Tag4, value4);
     map_msg.emplace_back(Tag5, value5);
 
-    try {
-        real_message.from_string(map_msg);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
-    EXPECT_EQ(real_message.get<Tag1>().Value, std::stoi(value1)) << "Expected: " << value1;
-    EXPECT_EQ(real_message.get<Tag2>().Value, std::stof(value2)) << "Expected: " << value2;
-    EXPECT_EQ(real_message.get<Tag3>().Value, value3[0]) << "Expected: " << value3;
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_FALSE(reject.has_value());
+    EXPECT_EQ(real_message.get<Tag1>().Value, std::stoi(value1));
+    EXPECT_EQ(real_message.get<Tag2>().Value, std::stof(value2));
+    EXPECT_EQ(real_message.get<Tag3>().Value, value3[0]);
     EXPECT_TRUE(real_message.get<Tag4>().Value);
     EXPECT_EQ(real_message.get<Tag5>().Value, value5);
 }
@@ -59,6 +58,7 @@ TEST_F(Message_insert_allrequired, not_order_entry)
     const std::string value5 = "string";
     fix::MapMessage map_msg{};
     Message real_message{};
+    std::optional<fix::RejectError> reject = std::nullopt;
 
     map_msg.emplace_back(Tag5, value5);
     map_msg.emplace_back(Tag4, value4);
@@ -66,13 +66,9 @@ TEST_F(Message_insert_allrequired, not_order_entry)
     map_msg.emplace_back(Tag2, value2);
     map_msg.emplace_back(Tag1, value1);
 
-    try {
-        real_message.from_string(map_msg);
-    } catch (const fix::RejectException &_reject) {
-        FAIL() << _reject.what() << ": " << _reject.reason();
-    } catch (const std::exception &_exception) {
-        FAIL() << _exception.what();
-    }
+    reject = real_message.from_string(map_msg);
+
+    ASSERT_FALSE(reject.has_value());
     EXPECT_EQ(real_message.get<Tag1>().Value, std::stoi(value1)) << "Expected: " << value1;
     EXPECT_EQ(real_message.get<Tag2>().Value, std::stof(value2)) << "Expected: " << value2;
     EXPECT_EQ(real_message.get<Tag3>().Value, value3[0]) << "Expected: " << value3;

@@ -1,10 +1,9 @@
 #pragma once
 
-
-#include "Exception.hpp"
+#include "Expected.hpp"
+#include "RejectError.hpp"
 #include "meta/concept.hpp"
 #include "Tag.hpp"
-#include "TagValueConvertor.hpp"
 #include "meta/is_required_tag.hpp"
 
 namespace fix
@@ -24,7 +23,7 @@ namespace fix
             static_assert(sizeof...(PosTags) > 0, "At least one positional tag is required");
             static_assert(std::conjunction_v<fix::meta::is_required_tag<PosTags>...>, "Only required tag are allowed in positional tag");
 
-            [[nodiscard]] bool try_insert(const std::string &_key, const std::string &_value);
+            [[nodiscard]] xstd::Expected<bool, RejectError> try_insert(const std::string &_key, const std::string &_value);
 
             [[nodiscard]] std::string to_string() const;
 
@@ -49,9 +48,9 @@ namespace fix
             [[nodiscard]] constexpr const std::pair<Tag, bool> &internal_getPositional() const;
 
             template<class Tag, class ...RemainTag>
-            inline bool try_insert_positional(const std::string &_key, const std::string &_value);
+            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_positional(const std::string &_key, const std::string &_value);
             template<class Tag, class ...RemainTag>
-            inline bool try_insert_nonpositional(const std::string &_key, const std::string _value);
+            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_nonpositional(const std::string &_key, const std::string _value);
 
             template<class Tag, class ...RemainTag>
             inline void to_string_positional(std::stringstream &_stream) const;

@@ -6,15 +6,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -g3)
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/tests/include)
 include(FetchContent)
 
 
 
 file(GLOB SRSC_fix
-    src/Exception.cpp
+    include/**.hpp
+    include/**.inl
 )
 
-add_library(fix_message STATIC ${SRSC_fix})
+add_library(fix_message INTERFACE ${SRSC_fix})
 
 enable_testing()
 
@@ -29,7 +31,7 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
 file(GLOB_RECURSE SRC_Tests
-    tests/**.cpp
+    tests/src/**.cpp
 )
 
 add_executable(fix_message_test
