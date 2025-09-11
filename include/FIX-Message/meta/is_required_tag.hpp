@@ -1,7 +1,7 @@
 #pragma once
 
-#include "meta/using.hpp"
-#include "meta/is_optional.hpp"
+#include "FIX-Message/meta/using.hpp"
+#include "FIX-Message/meta/is_optional.hpp"
 
 namespace fix
 {

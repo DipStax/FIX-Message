@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "RejectError.hpp"
+#include "FIX-Message/RejectError.hpp"
 
 std::optional<fix::RejectError> TagConvertor(const std::string &_value, char &_out);
 

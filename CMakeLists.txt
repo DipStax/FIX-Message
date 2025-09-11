@@ -5,11 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -g3)
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/tests/include)
+
 include(FetchContent)
-
-
 
 file(GLOB SRSC_fix
     include/**.hpp
@@ -17,6 +14,8 @@ file(GLOB SRSC_fix
 )
 
 add_library(fix_message INTERFACE ${SRSC_fix})
+
+target_include_directories(fix_message INTERFACE include)
 
 enable_testing()
 
@@ -37,8 +36,7 @@ file(GLOB_RECURSE SRC_Tests
 add_executable(fix_message_test
     ${SRC_Tests}
 )
-target_include_directories(fix_message_test PRIVATE include)
-target_include_directories(fix_message_test PRIVATE test)
+target_include_directories(fix_message_test PRIVATE tests/include)
 
 target_link_libraries(fix_message_test fix_message GTest::gtest_main)
 

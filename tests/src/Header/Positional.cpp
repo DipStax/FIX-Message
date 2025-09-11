@@ -1,7 +1,7 @@
 #include "TagConvertor.hpp"
-#include "RejectError.hpp"
+#include "FIX-Message/RejectError.hpp"
 
-#include "Header.hpp"
+#include "FIX-Message/Header.hpp"
 
 #include <gtest/gtest.h>
 
