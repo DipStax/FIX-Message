@@ -2,18 +2,25 @@
 #include <iomanip>
 
 #include "Header.hpp"
+#include "Expected.hpp"
 
 namespace fix
 {
     template<class ...PosTags, class ...Tags>
-    bool Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert(const std::string &_key, const std::string &_value)
+    xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert(const std::string &_key, const std::string &_value)
     {
-        if (try_insert_positional<PosTags...>(_key, _value))
-            return true;
-        if constexpr (sizeof...(Tags) > 0)
-            return try_insert_nonpositional<Tags...>(_key, _value);
-        else
-            return false;
+        xstd::Expected<bool, RejectError> expected = try_insert_positional<PosTags...>(_key, _value);
+
+        if (expected.has_value())
+        {
+            if (expected.value())
+                return true;
+            if constexpr (sizeof...(Tags) > 0)
+                return try_insert_nonpositional<Tags...>(_key, _value);
+            else
+                return false;
+        }
+        return expected;
     }
 
     template<class ...PosTags, class ...Tags>
@@ -76,23 +83,30 @@ namespace fix
 
     template<class ...PosTags, class ...Tags>
     template<class Tag, class ...RemainTag>
-    bool Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_positional(const std::string &_key, const std::string &_value)
+    xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_positional(const std::string &_key, const std::string &_value)
     {
         std::pair<Tag, bool> &tag = internal_getPositional<Tag>();
 
         if (!tag.second) {
             if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+                std::optional<RejectError> error = std::nullopt;
+
                 if constexpr (IsOptional<typename Tag::ValueType>) {
-                    tag.first.Value = TagValueConvertorOptional<typename Tag::ValueType::value_type>(_value);
+                    if (_value.empty())
+                        tag.first.Value = std::nullopt;
+                    else
+                        error = TagConvertor(_value, tag.first.Value.value());
                 } else {
                     if (_value.empty())
-                        throw RejectException("Expected a value", RejectException::EmptyValue);
-                    tag.first.Value = TagValueConvertor<typename Tag::ValueType>(_value);
+                        return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", });
+                    error = TagConvertor(_value, tag.first.Value);
                 }
+                if (error.has_value())
+                    return xstd::Unexpected<RejectError>(error.value());
                 tag.second = true;
                 return true;
             }
-            throw RejectException("Invalid positional tag", RejectException::InvalidTag);
+            return xstd::Unexpected<RejectError>({ RejectError::InvalidTag, "Invalid positional tag" });
         }
         if constexpr (sizeof...(RemainTag) > 0) {
             return try_insert_positional<RemainTag...>(_key, _value);
@@ -103,16 +117,23 @@ namespace fix
 
     template<class ...PosTags, class ...Tags>
     template<class Tag, class ...RemainTag>
-    bool Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_nonpositional(const std::string &_key, const std::string _value)
+    xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_nonpositional(const std::string &_key, const std::string _value)
     {
         if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+            std::optional<RejectError> error = std::nullopt;
+
             if constexpr (IsOptional<typename Tag::ValueType>) {
-                get<Tag::tag>().Value = TagValueConvertorOptional<typename Tag::ValueType::value_type>(_value);
+                if (_value.empty())
+                    get<Tag::tag>().Value = std::nullopt;
+                else
+                    error = TagConvertor(_value, get<Tag::tag>().Value.value());
             } else {
                 if (_value.empty())
-                    throw RejectException("Expected a value", RejectException::EmptyValue);
-                get<Tag::tag>().Value = TagValueConvertor<typename Tag::ValueType>(_value);
+                    return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", });
+                error = TagConvertor(_value, get<Tag::tag>().Value);
             }
+            if (error.has_value())
+                return xstd::Unexpected<RejectError>(error.value());
             return true;
         }
         if constexpr (sizeof...(RemainTag) > 0) {
