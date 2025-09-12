@@ -1,5 +1,6 @@
 // #include "Message.hpp"
 #include "TagConvertor.hpp"
+#include "Tag.hpp"
 
 #include "FIX-Message/List.hpp"
 
@@ -8,12 +9,9 @@
 class List_insert_simplecase : public testing::Test
 {
     public:
-        static constexpr const char TagNo[] = "1";
-        static constexpr const char Tag1[] = "2";
-        static constexpr const char Tag2[] = "3";
 
         using List = fix::List<
-            fix::TagNo<TagNo, false>,
+            fix::TagNo<TagRef, false>,
             fix::Tag<Tag1, int>
         >;
 };
@@ -28,7 +26,7 @@ TEST_F(List_insert_simplecase, stop_end)
 
     real_list.TagNo.Value = 1;
 
-    map_msg.emplace_back(Tag1, value);
+    map_msg.emplace_back(Tag1Value, value);
     reject = real_list.from_string(map_msg, it);
 
     ASSERT_FALSE(reject.has_value());
@@ -50,8 +48,8 @@ TEST_F(List_insert_simplecase, stop_before_end)
 
     real_list.TagNo.Value = 1;
 
-    map_msg.emplace_back(Tag1, value);
-    map_msg.emplace_back(Tag2, value);
+    map_msg.emplace_back(Tag1Value, value);
+    map_msg.emplace_back(Tag2Value, value);
 
     reject = real_list.from_string(map_msg, it);
 
@@ -67,15 +65,9 @@ TEST_F(List_insert_simplecase, stop_before_end)
 class List_insert_allrequired : public testing::Test
 {
     public:
-        static constexpr const char TagNo[] = "1";
-        static constexpr const char Tag1[] = "2";
-        static constexpr const char Tag2[] = "3";
-        static constexpr const char Tag3[] = "4";
-        static constexpr const char Tag4[] = "5";
-        static constexpr const char Tag5[] = "6";
 
         using List = fix::List<
-            fix::TagNo<TagNo, false>,
+            fix::TagNo<TagRef, false>,
             fix::Tag<Tag1, int>,
             fix::Tag<Tag2, float>,
             fix::Tag<Tag3, char>,
@@ -98,11 +90,11 @@ TEST_F(List_insert_allrequired, single_entry)
 
     real_list.TagNo.Value = 1;
 
-    map_msg.emplace_back(Tag1, value1);
-    map_msg.emplace_back(Tag2, value2);
-    map_msg.emplace_back(Tag3, value3);
-    map_msg.emplace_back(Tag4, value4);
-    map_msg.emplace_back(Tag5, value5);
+    map_msg.emplace_back(Tag1Value, value1);
+    map_msg.emplace_back(Tag2Value, value2);
+    map_msg.emplace_back(Tag3Value, value3);
+    map_msg.emplace_back(Tag4Value, value4);
+    map_msg.emplace_back(Tag5Value, value5);
 
     reject = real_list.from_string(map_msg, it);
 
@@ -139,17 +131,17 @@ TEST_F(List_insert_allrequired, multi_entry)
 
     real_list.TagNo.Value = 2;
 
-    map_msg.emplace_back(Tag1, value1_1);
-    map_msg.emplace_back(Tag2, value1_2);
-    map_msg.emplace_back(Tag3, value1_3);
-    map_msg.emplace_back(Tag4, value1_4);
-    map_msg.emplace_back(Tag5, value1_5);
+    map_msg.emplace_back(Tag1Value, value1_1);
+    map_msg.emplace_back(Tag2Value, value1_2);
+    map_msg.emplace_back(Tag3Value, value1_3);
+    map_msg.emplace_back(Tag4Value, value1_4);
+    map_msg.emplace_back(Tag5Value, value1_5);
 
-    map_msg.emplace_back(Tag1, value2_1);
-    map_msg.emplace_back(Tag2, value2_2);
-    map_msg.emplace_back(Tag3, value2_3);
-    map_msg.emplace_back(Tag4, value2_4);
-    map_msg.emplace_back(Tag5, value2_5);
+    map_msg.emplace_back(Tag1Value, value2_1);
+    map_msg.emplace_back(Tag2Value, value2_2);
+    map_msg.emplace_back(Tag3Value, value2_3);
+    map_msg.emplace_back(Tag4Value, value2_4);
+    map_msg.emplace_back(Tag5Value, value2_5);
 
     reject = real_list.from_string(map_msg, it);
 
@@ -188,11 +180,11 @@ TEST_F(List_insert_allrequired, single_entry_not_order)
 
     real_list.TagNo.Value = 1;
 
-    map_msg.emplace_back(Tag5, value5);
-    map_msg.emplace_back(Tag4, value4);
-    map_msg.emplace_back(Tag3, value3);
-    map_msg.emplace_back(Tag2, value2);
-    map_msg.emplace_back(Tag1, value1);
+    map_msg.emplace_back(Tag5Value, value5);
+    map_msg.emplace_back(Tag4Value, value4);
+    map_msg.emplace_back(Tag3Value, value3);
+    map_msg.emplace_back(Tag2Value, value2);
+    map_msg.emplace_back(Tag1Value, value1);
 
     reject = real_list.from_string(map_msg, it);
 
@@ -211,12 +203,8 @@ TEST_F(List_insert_allrequired, single_entry_not_order)
 class List_insert_withoptional : public testing::Test
 {
     public:
-        static constexpr const char TagNo[] = "1";
-        static constexpr const char Tag1[] = "2";
-        static constexpr const char Tag2[] = "3";
-
         using List = fix::List<
-            fix::TagNo<TagNo, false>,
+            fix::TagNo<TagRef, false>,
             fix::Tag<Tag1, std::optional<int>>,
             fix::Tag<Tag2, float>
         >;
@@ -232,8 +220,8 @@ TEST_F(List_insert_withoptional, single_entry)
     const std::string value1 = "123456789";
     const std::string value2 = "12345.6789";
 
-    map_msg.emplace_back(Tag1, value1);
-    map_msg.emplace_back(Tag2, value2);
+    map_msg.emplace_back(Tag1Value, value1);
+    map_msg.emplace_back(Tag2Value, value2);
 
     real_list.TagNo.Value = 1;
     reject = real_list.from_string(map_msg, it);
@@ -258,8 +246,8 @@ TEST_F(List_insert_withoptional, single_entry_optional_empty)
     const std::string value1 = "";
     const std::string value2 = "12345.6789";
 
-    map_msg.emplace_back(Tag1, value1);
-    map_msg.emplace_back(Tag2, value2);
+    map_msg.emplace_back(Tag1Value, value1);
+    map_msg.emplace_back(Tag2Value, value2);
 
     real_list.TagNo.Value = 1;
     reject = real_list.from_string(map_msg, it);
@@ -283,7 +271,7 @@ TEST_F(List_insert_withoptional, single_entry_optional_missing)
     const std::string value1 = "";
     const std::string value2 = "12345.6789";
 
-    map_msg.emplace_back(Tag2, value2);
+    map_msg.emplace_back(Tag2Value, value2);
 
     real_list.TagNo.Value = 1;
     reject = real_list.from_string(map_msg, it);
@@ -313,11 +301,11 @@ TEST_F(List_insert_withoptional, multi_entry)
 
     const std::string value3_2 = "0";
 
-    map_msg.emplace_back(Tag1, value1_1);
-    map_msg.emplace_back(Tag2, value1_2);
-    map_msg.emplace_back(Tag1, value2_1);
-    map_msg.emplace_back(Tag2, value2_2);
-    map_msg.emplace_back(Tag2, value3_2);
+    map_msg.emplace_back(Tag1Value, value1_1);
+    map_msg.emplace_back(Tag2Value, value1_2);
+    map_msg.emplace_back(Tag1Value, value2_1);
+    map_msg.emplace_back(Tag2Value, value2_2);
+    map_msg.emplace_back(Tag2Value, value3_2);
 
     real_list.TagNo.Value = 3;
     reject = real_list.from_string(map_msg, it);

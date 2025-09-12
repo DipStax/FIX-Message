@@ -22,7 +22,7 @@ namespace fix::meta
 
     template<fix::TagName Name, fix::TagName NameTag, class TypeImp>
     struct is_tag_with_name<Name, fix::Tag<NameTag, TypeImp>>
-        : std::bool_constant<std::strcmp(Name, NameTag) == 0>
+        : std::bool_constant<Name == NameTag>
     {
         using type = fix::Tag<Name, TypeImp>;
     };
@@ -48,7 +48,7 @@ namespace fix::meta
 
     template<fix::TagName Name, fix::TagName NameTagNo, bool IsOptional, class ...Tags>
     struct is_taglist_with_name<Name, fix::List<fix::TagNo<NameTagNo, IsOptional>, Tags...>>
-        : std::bool_constant<std::strcmp(Name, NameTagNo) == 0>
+        : std::bool_constant<Name == NameTagNo>
     {
         using type = fix::List<fix::TagNo<NameTagNo, IsOptional>, Tags...>;
     };

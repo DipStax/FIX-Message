@@ -1,4 +1,5 @@
 #include "TagConvertor.hpp"
+#include "Tag.hpp"
 
 #include "FIX-Message/Header.hpp"
 
@@ -7,10 +8,7 @@
 class Header_nonpositional_insert : public testing::Test
 {
     public:
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
+        static_assert(fix::IsOptional<std::optional<int>>, "optional fail");
 
         using Header = fix::Header<
             fix::PositionalTag<
@@ -28,19 +26,21 @@ class Header_nonpositional_insert : public testing::Test
 
         void SetUp() override
         {
-            ASSERT_TRUE(header.try_insert(Tag1, Value1));
+            xstd::Expected<bool, fix::RejectError> error = header.try_insert(Tag1Value, Value1);
+
+            ASSERT_TRUE(error.has_value());
             ASSERT_EQ(header.getPositional<Tag1>().Value, Value1);
         }
 };
 
 TEST_F(Header_nonpositional_insert, valid)
 {
-    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag2, Value2);
+    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag2Value, Value2);
 
     ASSERT_TRUE(expected.has_value());
     ASSERT_TRUE(expected.value());
 
-    expected = header.try_insert(Tag3, Value3);
+    expected = header.try_insert(Tag3Value, Value3);
 
     ASSERT_TRUE(expected.has_value());
     ASSERT_TRUE(expected.value());
@@ -51,12 +51,12 @@ TEST_F(Header_nonpositional_insert, valid)
 
 TEST_F(Header_nonpositional_insert, valid_not_order)
 {
-    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag3, Value3);
+    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag3Value, Value3);
 
     ASSERT_TRUE(expected.has_value());
     ASSERT_TRUE(expected.value());
 
-    expected = header.try_insert(Tag2, Value2);
+    expected = header.try_insert(Tag2Value, Value2);
 
     ASSERT_TRUE(expected.has_value());
     ASSERT_TRUE(expected.value());
@@ -68,17 +68,17 @@ TEST_F(Header_nonpositional_insert, valid_not_order)
 TEST_F(Header_nonpositional_insert, insert_end)
 {
     const std::string value4 = "end";
-    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag2, Value2);
+    xstd::Expected<bool, fix::RejectError> expected = header.try_insert(Tag2Value, Value2);
 
     ASSERT_TRUE(expected.has_value());
     ASSERT_TRUE(expected.value());
 
-    expected = header.try_insert(Tag3, Value3);
+    expected = header.try_insert(Tag3Value, Value3);
 
     ASSERT_TRUE(expected.has_value());
     ASSERT_TRUE(expected.value());
 
-    expected = header.try_insert(Tag4, value4);
+    expected = header.try_insert(Tag4Value, value4);
 
     ASSERT_TRUE(expected.has_value());
     ASSERT_FALSE(expected.value());

@@ -7,8 +7,9 @@
 class Group_required : public testing::Test
 {
     public:
-        static constexpr const char TagNo[] = "1";
-        static constexpr const char Tag[] = "2";
+        static constexpr const fix::TagName TagNo = 1;
+        static constexpr const fix::TagName Tag = 2;
+        static constexpr const char TagNoValue[] = "1";
 
         using Message = fix::Message<'0',
             fix::TagList<
@@ -27,13 +28,13 @@ TEST_F(Group_required, invalid_empty)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(TagNo, value);
+    map_msg.emplace_back(TagNoValue, value);
     reject = real_message.from_string(map_msg);
 
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Expected a value for required No Tag");
-    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ReqTagMissing);
-    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
+    EXPECT_EQ(reject.value().Reason, fix::RejectError::ReqTagMissing);
+    EXPECT_EQ(reject.value().Tag, TagNo);
 }
 
 TEST_F(Group_required, invalid_zero)
@@ -43,13 +44,13 @@ TEST_F(Group_required, invalid_zero)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(TagNo, value);
+    map_msg.emplace_back(TagNoValue, value);
     reject = real_message.from_string(map_msg);
 
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for required No Tag");
-    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
-    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
+    EXPECT_EQ(reject.value().Reason, fix::RejectError::ValueOORange);
+    EXPECT_EQ(reject.value().Tag, TagNo);
 }
 
 TEST_F(Group_required, invalid_negative)
@@ -59,20 +60,21 @@ TEST_F(Group_required, invalid_negative)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(TagNo, value);
+    map_msg.emplace_back(TagNoValue, value);
     reject = real_message.from_string(map_msg);
 
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for required No Tag");
-    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
-    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
+    EXPECT_EQ(reject.value().Reason, fix::RejectError::ValueOORange);
+    EXPECT_EQ(reject.value().Tag, TagNo);
 }
 
 class Group_optional : public testing::Test
 {
     public:
-        static constexpr const char TagNo[] = "1";
-        static constexpr const char Tag[] = "2";
+        static constexpr const fix::TagName TagNo = 1;
+        static constexpr const fix::TagName Tag = 2;
+        static constexpr const char TagNoValue[] = "1";
 
         using Message = fix::Message<'0',
             fix::TagList<
@@ -91,7 +93,7 @@ TEST_F(Group_optional, valid_tagno_zero)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(TagNo, value);
+    map_msg.emplace_back(TagNoValue, value);
     reject = real_message.from_string(map_msg);
 
     ASSERT_FALSE(reject.has_value());
@@ -106,7 +108,7 @@ TEST_F(Group_optional, valid_tagno_empty)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(TagNo, value);
+    map_msg.emplace_back(TagNoValue, value);
     reject = real_message.from_string(map_msg);
 
     ASSERT_FALSE(reject.has_value());
@@ -120,11 +122,11 @@ TEST_F(Group_optional, invalid_negative)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(TagNo, value);
+    map_msg.emplace_back(TagNoValue, value);
     reject = real_message.from_string(map_msg);
 
     ASSERT_TRUE(reject.has_value());
     EXPECT_STREQ(reject.value().Message.c_str(), "Invalid value for optional No Tag");
-    EXPECT_STREQ(reject.value().Reason.c_str(), fix::RejectError::ValueOORange);
-    EXPECT_STREQ(reject.value().Tag.c_str(), TagNo);
+    EXPECT_EQ(reject.value().Reason, fix::RejectError::ValueOORange);
+    EXPECT_EQ(reject.value().Tag, TagNo);
 }

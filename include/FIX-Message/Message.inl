@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 #include "Message.hpp"
 
@@ -8,32 +9,39 @@ namespace fix
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::from_string(const MapMessage &_mapmsg)
     {
-        std::unordered_set<std::string> set_tag{};
+        std::unordered_set<TagName> set_tag{};
         std::optional<RejectError> reject;
 
         for (size_t it = 0; it < _mapmsg.size(); it++) {
             const std::pair<std::string, std::string> &pair = _mapmsg.at(it);
             const std::string &key = pair.first;
             const std::string &value = pair.second;
+            TagName keytag = 0;
+
+            if (key.empty())
+                return RejectError{ RejectError::InvalidTag, "Tag is empty" };
+            if (!std::all_of(key.begin(), key.end(), [] (char _c) { return std::isdigit(_c); }))
+                return RejectError{ RejectError::InvalidTag, "Tag should be numeric" };
+            keytag = std::stoi(key);
 
             if constexpr (sizeof...(Tags) > 0) {
-                xstd::Expected<bool, RejectError> error = try_insert<Tags...>(key, value);
+                xstd::Expected<bool, RejectError> error = try_insert<Tags...>(keytag, value);
 
                 if (error.has_value()) {
                     if (!error.value()) {
-                        reject = try_insert_tagno(key, value, _mapmsg, it);
+                        reject = try_insert_tagno(keytag, value, _mapmsg, it);
                         if (reject.has_value())
                             return reject.value();
                     } else {
-                        if (set_tag.contains(key))
-                            return RejectError{ RejectError::InvalidTag, "Duplicate tag value", key };
-                        set_tag.emplace(key);
+                        if (set_tag.contains(keytag))
+                            return RejectError{ RejectError::InvalidTag, "Duplicate tag value", keytag };
+                        set_tag.emplace(keytag);
                     }
                 } else {
                     return error.error();
                 }
             } else {
-                reject = try_insert_tagno(key, value, _mapmsg, it);
+                reject = try_insert_tagno(keytag, value, _mapmsg, it);
                 if (reject.has_value())
                     return reject.value();
             }
@@ -90,9 +98,9 @@ namespace fix
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     template<class Tag, class ...RemainTag>
-    xstd::Expected<bool, RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert(const std::string &_key, const std::string &_value)
+    xstd::Expected<bool, RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert(TagName _key, const std::string &_value)
     {
-        if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+        if (Tag::tag == _key) {
             std::optional<RejectError> error;
 
             if constexpr (IsOptional<typename Tag::ValueType>) {
@@ -124,7 +132,7 @@ namespace fix
     }
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
-    std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert_tagno(const std::string &_key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
+    std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::try_insert_tagno(TagName _key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
     {
         if constexpr (sizeof...(TagLists) > 0) {
             xstd::Expected<bool, RejectError> error = is_reftagno<TagLists...>(_key, _value, _mapmsg, _it);
@@ -144,9 +152,9 @@ namespace fix
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     template<class TagList, class ...RemainTagList>
-    xstd::Expected<bool, RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::is_reftagno(const std::string &_key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
+    xstd::Expected<bool, RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::is_reftagno(TagName _key, const std::string &_value, const MapMessage &_mapmsg, size_t &_it)
     {
-        if (std::strcmp(TagList::tagno, _key.c_str()) != 0) {
+        if (TagList::tagno != _key) {
             if constexpr (sizeof...(RemainTagList) != 0)
                 return is_reftagno<RemainTagList...>(_key, _value);
             else
@@ -194,7 +202,7 @@ namespace fix
 
     template<fix::MessageType MsgType, class ...TagLists, class ...Tags>
     template<class Tag, class ...RemainTag>
-    std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
+    std::optional<RejectError> Message<MsgType, fix::TagList<TagLists...>, Tags...>::verify_required_tag(const std::unordered_set<TagName> &_set)
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))

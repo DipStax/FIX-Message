@@ -1,4 +1,5 @@
 #include "FIX-Message/List.hpp"
+#include "Tag.hpp"
 
 #include <gtest/gtest.h>
 
@@ -7,15 +8,8 @@
 class List_serialization_nooptional : public testing::Test
 {
     public:
-        static constexpr const char TagRef[] = "0";
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
-        static constexpr const char Tag5[] = "5";
-
         using List = fix::List<
-            fix::TagNo<TagRef, true>,
+            fix::TagNo<TagRef, false>,
             fix::Tag<Tag1, std::string>,
             fix::Tag<Tag2, int>,
             fix::Tag<Tag3, float>,
@@ -110,11 +104,6 @@ TEST_F(List_serialization_nooptional, multi_list)
 class List_serialization_optional : public testing::Test
 {
     public:
-        static constexpr const char TagRef[] = "0";
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-
         using List = fix::List<
             fix::TagNo<TagRef, true>,
             fix::Tag<Tag1, std::string>,

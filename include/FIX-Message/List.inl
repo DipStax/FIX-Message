@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sstream>
 #include <iomanip>
 
@@ -34,7 +35,7 @@ namespace fix
     {
         _stream << TagNoType::tag << "=" << m_data.size() << "\1";
         for (const DataTuple &_tuple : m_data)
-        to_string_tag<Tags...>(_stream, _tuple);
+            to_string_tag<Tags...>(_stream, _tuple);
     }
 
     template<class RefTagNo, class ...Tags>
@@ -94,19 +95,26 @@ namespace fix
 
         while (!stop && _pos < _mapmsg.size()) {
             DataTuple tuple{};
-            std::unordered_set<std::string> set_tag{};
+            std::unordered_set<TagName> set_tag{};
 
             for (; _pos < _mapmsg.size(); _pos++) {
                 const std::pair<std::string, std::string> &pair = _mapmsg.at(_pos);
                 const std::string &key = pair.first;
                 const std::string &value = pair.second;
+                TagName keytag = 0;
 
-                if (set_tag.contains(key))
+                if (key.empty())
+                    return RejectError{ RejectError::InvalidTag, "Tag is empty" };
+                if (!std::all_of(key.begin(), key.end(), [] (char _c) { return std::isdigit(_c); }))
+                    return RejectError{ RejectError::InvalidTag, "Tag should be numeric" };
+                keytag = std::stoi(key);
+
+                if (set_tag.contains(keytag))
                     break;
-                expected = try_insert<Tags...>(tuple, key, value);
+                expected = try_insert<Tags...>(tuple, keytag, value);
                 if (expected.has_value()) {
                     if (expected.value()) {
-                        set_tag.insert(key);
+                        set_tag.insert(keytag);
                     } else {
                         stop = true;
                         break;
@@ -125,9 +133,9 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    xstd::Expected<bool, RejectError> List<RefTagNo, Tags...>::try_insert(DataTuple &_tuple, const std::string &_key, const std::string _value)
+    xstd::Expected<bool, RejectError> List<RefTagNo, Tags...>::try_insert(DataTuple &_tuple, TagName _key, const std::string _value)
     {
-        if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+        if (Tag::tag == _key) {
             std::optional<RejectError> error = std::nullopt;
 
             if constexpr (IsOptional<typename Tag::ValueType>) {
@@ -160,7 +168,7 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    std::optional<RejectError> List<RefTagNo, Tags...>::verify_required_tag(const std::unordered_set<std::string> &_set)
+    std::optional<RejectError> List<RefTagNo, Tags...>::verify_required_tag(const std::unordered_set<TagName> &_set)
     {
         if constexpr (!IsOptional<typename Tag::ValueType>)
             if (!_set.contains(Tag::tag))
@@ -176,12 +184,12 @@ namespace fix
     void List<RefTagNo, Tags...>::to_string_tag(std::stringstream &_stream, const DataTuple &_tuple)
     {
         if constexpr (IsOptional<typename Tag::ValueType>) {
-            const typename Tag::ValueType &tag = get<Tag::tag>(_tuple).Value;
+            const typename Tag::ValueType &tag = fix::get<Tag::tag>(_tuple).Value;
 
             if (tag.has_value())
                 _stream << Tag::tag << "=" << tag.value() << "\1";
         } else {
-            _stream << Tag::tag << "=" << get<Tag::tag>(_tuple).Value << "\1";
+            _stream << Tag::tag << "=" << fix::get<Tag::tag>(_tuple).Value << "\1";
         }
         if constexpr (sizeof...(RemainTag) > 0)
             to_string_tag<RemainTag...>(_stream, _tuple);

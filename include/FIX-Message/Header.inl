@@ -1,5 +1,7 @@
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
+#include <iostream>
 
 #include "Header.hpp"
 #include "Expected.hpp"
@@ -9,14 +11,20 @@ namespace fix
     template<class ...PosTags, class ...Tags>
     xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert(const std::string &_key, const std::string &_value)
     {
-        xstd::Expected<bool, RejectError> expected = try_insert_positional<PosTags...>(_key, _value);
+        if (_key.empty())
+            return xstd::Unexpected<RejectError>({ RejectError::InvalidTag, "Tag is empty" });
+        if (!std::all_of(_key.begin(), _key.end(), [] (char _c) { return std::isdigit(_c); }))
+            return xstd::Unexpected<RejectError>({ RejectError::InvalidTag, "Tag should be numeric" });
 
-        if (expected.has_value())
-        {
+        fix::TagName key = std::stoi(_key);
+
+        xstd::Expected<bool, RejectError> expected = try_insert_positional<PosTags...>(key, _value);
+
+        if (expected.has_value()) {
             if (expected.value())
                 return true;
             if constexpr (sizeof...(Tags) > 0)
-                return try_insert_nonpositional<Tags...>(_key, _value);
+                return try_insert_nonpositional<Tags...>(key, _value);
             else
                 return false;
         }
@@ -83,12 +91,12 @@ namespace fix
 
     template<class ...PosTags, class ...Tags>
     template<class Tag, class ...RemainTag>
-    xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_positional(const std::string &_key, const std::string &_value)
+    xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_positional(TagName _key, const std::string &_value)
     {
         std::pair<Tag, bool> &tag = internal_getPositional<Tag>();
 
         if (!tag.second) {
-            if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+            if (Tag::tag == _key) {
                 std::optional<RejectError> error = std::nullopt;
 
                 if constexpr (IsOptional<typename Tag::ValueType>) {
@@ -124,9 +132,9 @@ namespace fix
 
     template<class ...PosTags, class ...Tags>
     template<class Tag, class ...RemainTag>
-    xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_nonpositional(const std::string &_key, const std::string _value)
+    xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert_nonpositional(TagName _key, const std::string _value)
     {
-        if (std::strcmp(Tag::tag, _key.c_str()) == 0) {
+        if (Tag::tag == _key) {
             std::optional<RejectError> error = std::nullopt;
 
             if constexpr (IsOptional<typename Tag::ValueType>) {

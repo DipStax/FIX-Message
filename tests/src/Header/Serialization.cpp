@@ -1,3 +1,5 @@
+#include "Tag.hpp"
+
 #include "FIX-Message/Header.hpp"
 
 #include <gtest/gtest.h>
@@ -7,12 +9,6 @@
 class Header_serialization_nononpositional : public testing::Test
 {
     public:
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
-        static constexpr const char Tag5[] = "5";
-
         using Header = fix::Header<
             fix::PositionalTag<
                 fix::Tag<Tag1, std::string>,

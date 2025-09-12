@@ -1,4 +1,5 @@
 #include "TagConvertor.hpp"
+#include "Tag.hpp"
 
 #include "FIX-Message/Message.hpp"
 
@@ -7,12 +8,6 @@
 class Message_insert_allrequired : public testing::Test
 {
     public:
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
-        static constexpr const char Tag5[] = "5";
-
         using Message = fix::Message<'0',
             fix::Tag<Tag1, int>,
             fix::Tag<Tag2, float>,
@@ -33,11 +28,11 @@ TEST_F(Message_insert_allrequired, order_entry)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(Tag1, value1);
-    map_msg.emplace_back(Tag2, value2);
-    map_msg.emplace_back(Tag3, value3);
-    map_msg.emplace_back(Tag4, value4);
-    map_msg.emplace_back(Tag5, value5);
+    map_msg.emplace_back(Tag1Value, value1);
+    map_msg.emplace_back(Tag2Value, value2);
+    map_msg.emplace_back(Tag3Value, value3);
+    map_msg.emplace_back(Tag4Value, value4);
+    map_msg.emplace_back(Tag5Value, value5);
 
     reject = real_message.from_string(map_msg);
 
@@ -60,11 +55,11 @@ TEST_F(Message_insert_allrequired, not_order_entry)
     Message real_message{};
     std::optional<fix::RejectError> reject = std::nullopt;
 
-    map_msg.emplace_back(Tag5, value5);
-    map_msg.emplace_back(Tag4, value4);
-    map_msg.emplace_back(Tag3, value3);
-    map_msg.emplace_back(Tag2, value2);
-    map_msg.emplace_back(Tag1, value1);
+    map_msg.emplace_back(Tag5Value, value5);
+    map_msg.emplace_back(Tag4Value, value4);
+    map_msg.emplace_back(Tag3Value, value3);
+    map_msg.emplace_back(Tag2Value, value2);
+    map_msg.emplace_back(Tag1Value, value1);
 
     reject = real_message.from_string(map_msg);
 
