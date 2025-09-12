@@ -39,6 +39,8 @@ namespace fix
             template<fix::TagName Name>
             [[nodiscard]] constexpr Tag<Name, meta::find_tagtype_t<Name, PosTags...>> &getPositional();
 
+            [[nodiscard]] std::optional<RejectError> verify() const;
+
         private:
             template<class Tag>
                 requires IsInListOf_Tag<Tag::tag, PosTags...>
@@ -51,6 +53,9 @@ namespace fix
             [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_positional(TagName _key, const std::string &_value);
             template<class Tag, class ...RemainTag>
             [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_nonpositional(TagName _key, const std::string _value);
+
+            template<class Tag, class ...RemainTag>
+            [[nodiscard]] inline std::optional<RejectError> verify_tag() const;
 
             template<class Tag, class ...RemainTag>
             inline void to_string_positional(std::stringstream &_stream) const;

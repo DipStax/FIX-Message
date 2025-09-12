@@ -32,6 +32,12 @@ namespace fix
     }
 
     template<class ...PosTags, class ...Tags>
+    std::optional<RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::verify() const
+    {
+        return verify_tag<PosTags...>();
+    }
+
+    template<class ...PosTags, class ...Tags>
     std::string Header<fix::PositionalTag<PosTags...>, Tags...>::to_string() const
     {
         std::stringstream stream;
@@ -163,6 +169,18 @@ namespace fix
         } else {
             return false;
         }
+    }
+
+    template<class ...PosTags, class ...Tags>
+    template<class Tag, class ...RemainTag>
+    std::optional<RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::verify_tag() const
+    {
+        if (!internal_getPositional<Tag>().second)
+            return RejectError{ RejectError::ReqTagMissing, "Missing positional tag", Tag::tag };
+        if constexpr (sizeof...(RemainTag) > 0)
+            return verify_tag<RemainTag...>();
+        else
+            return std::nullopt;
     }
 
     template<class ...PosTags, class ...Tags>
