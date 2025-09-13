@@ -16,6 +16,8 @@ namespace fix
     class Message<MsgType, fix::TagList<TagLists...>, Tags...>
     {
         public:
+            static constexpr const char Type = MsgType;
+
             std::optional<RejectError> from_string(const MapMessage &_mapmsg);
 
             [[nodiscard]] std::string to_string() const;
