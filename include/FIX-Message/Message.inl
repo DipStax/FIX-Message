@@ -14,16 +14,12 @@ namespace fix
 
         for (size_t it = 0; it < _mapmsg.size(); it++) {
             const std::pair<std::string, std::string> &pair = _mapmsg.at(it);
-            const std::string &key = pair.first;
             const std::string &value = pair.second;
             TagName keytag = 0;
+            reject = from_FIX(pair.first, keytag);
 
-            if (key.empty())
-                return RejectError{ RejectError::InvalidTag, "Tag is empty" };
-            if (!std::all_of(key.begin(), key.end(), [] (char _c) { return std::isdigit(_c); }))
-                return RejectError{ RejectError::InvalidTag, "Tag should be numeric" };
-            keytag = std::stoi(key);
-
+            if (reject.has_value())
+                return reject;
             if constexpr (sizeof...(Tags) > 0) {
                 xstd::Expected<bool, RejectError> error = try_insert<Tags...>(keytag, value);
 

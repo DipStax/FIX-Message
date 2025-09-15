@@ -11,24 +11,27 @@ namespace fix
     template<class ...PosTags, class ...Tags>
     xstd::Expected<bool, RejectError> Header<fix::PositionalTag<PosTags...>, Tags...>::try_insert(const std::string &_key, const std::string &_value)
     {
+        TagName tagkey = 0;
+
         if (_key.empty())
             return xstd::Unexpected<RejectError>({ RejectError::InvalidTag, "Tag is empty" });
-        if (!std::all_of(_key.begin(), _key.end(), [] (char _c) { return std::isdigit(_c); }))
-            return xstd::Unexpected<RejectError>({ RejectError::InvalidTag, "Tag should be numeric" });
 
-        fix::TagName key = std::stoi(_key);
+        std::optional<fix::RejectError> reject = from_FIX(_key, tagkey);
 
-        xstd::Expected<bool, RejectError> expected = try_insert_positional<PosTags...>(key, _value);
+        if (reject.has_value())
+            return xstd::Unexpected<RejectError>(std::move(reject.value()));
 
-        if (expected.has_value()) {
-            if (expected.value())
+        xstd::Expected<bool, RejectError> error = try_insert_positional<PosTags...>(tagkey, _value);
+
+        if (error.has_value()) {
+            if (error.value())
                 return true;
             if constexpr (sizeof...(Tags) > 0)
-                return try_insert_nonpositional<Tags...>(key, _value);
+                return try_insert_nonpositional<Tags...>(tagkey, _value);
             else
                 return false;
         }
-        return expected;
+        return error;
     }
 
     template<class ...PosTags, class ...Tags>

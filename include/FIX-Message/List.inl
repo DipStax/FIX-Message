@@ -109,19 +109,14 @@ namespace fix
 
             for (; _pos < _mapmsg.size(); _pos++) {
                 const std::pair<std::string, std::string> &pair = _mapmsg.at(_pos);
-                const std::string &key = pair.first;
-                const std::string &value = pair.second;
                 TagName keytag = 0;
+                std::optional<fix::RejectError> reject = from_FIX(pair.first, keytag);
 
-                if (key.empty())
-                    return RejectError{ RejectError::InvalidTag, "Tag is empty" };
-                if (!std::all_of(key.begin(), key.end(), [] (char _c) { return std::isdigit(_c); }))
-                    return RejectError{ RejectError::InvalidTag, "Tag should be numeric" };
-                keytag = std::stoi(key);
-
+                if (reject.has_value())
+                    return reject;
                 if (set_tag.contains(keytag))
                     break;
-                expected = try_insert<Tags...>(tuple, keytag, value);
+                expected = try_insert<Tags...>(tuple, keytag, pair.second);
                 if (expected.has_value()) {
                     if (expected.value()) {
                         set_tag.insert(keytag);
