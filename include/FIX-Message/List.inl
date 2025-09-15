@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <sstream>
-#include <iomanip>
 
 #include "List.hpp"
 #include "RejectError.hpp"
@@ -31,11 +29,23 @@ namespace fix
     }
 
     template<class RefTagNo, class ...Tags>
-    void List<RefTagNo, Tags...>::to_string(std::stringstream &_stream)
+    void List<RefTagNo, Tags...>::to_string(std::string &_result)
     {
-        _stream << TagNoType::tag << "=" << m_data.size() << "\1";
+        if constexpr (TagNoType::Optional) {
+            if (m_data.size() != 0) {
+                to_FIX(_result, TagNoType::tag);
+                _result.push_back('=');
+                to_FIX(_result, m_data.size());
+                _result.push_back('\1');
+            }
+        } else {
+            to_FIX(_result, TagNoType::tag);
+            _result.push_back('=');
+            to_FIX(_result, m_data.size());
+            _result.push_back('\1');
+        }
         for (const DataTuple &_tuple : m_data)
-            to_string_tag<Tags...>(_stream, _tuple);
+            to_string_tag<Tags...>(_result, _tuple);
     }
 
     template<class RefTagNo, class ...Tags>
@@ -144,14 +154,14 @@ namespace fix
                 } else {
                     typename Tag::ValueType::value_type value;
 
-                    error = TagConvertor(_value, value);
+                    error = from_FIX(_value, value);
                     if (!error.has_value())
                         std::get<Tag>(_tuple).Value = value;
                 }
             } else {
                 if (_value.empty())
                     return xstd::Unexpected<RejectError>({ RejectError::EmptyValue, "Expected a value", Tag::tag });
-                error = TagConvertor(_value, std::get<Tag>(_tuple).Value);
+                error = from_FIX(_value, std::get<Tag>(_tuple).Value);
             }
             if (error.has_value()) {
                 error.value().Tag = Tag::tag;
@@ -181,18 +191,25 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    void List<RefTagNo, Tags...>::to_string_tag(std::stringstream &_stream, const DataTuple &_tuple)
+    void List<RefTagNo, Tags...>::to_string_tag(std::string &_result, const DataTuple &_tuple)
     {
         if constexpr (IsOptional<typename Tag::ValueType>) {
             const typename Tag::ValueType &tag = fix::get<Tag::tag>(_tuple).Value;
 
-            if (tag.has_value())
-                _stream << Tag::tag << "=" << tag.value() << "\1";
+            if (tag.has_value()) {
+                to_FIX(_result, Tag::tag);
+                _result.push_back('=');
+                to_FIX(_result, tag.value());
+                _result.push_back('\1');
+            }
         } else {
-            _stream << Tag::tag << "=" << fix::get<Tag::tag>(_tuple).Value << "\1";
+            to_FIX(_result, Tag::tag);
+            _result.push_back('=');
+            to_FIX(_result, fix::get<Tag::tag>(_tuple).Value);
+            _result.push_back('\1');
         }
         if constexpr (sizeof...(RemainTag) > 0)
-            to_string_tag<RemainTag...>(_stream, _tuple);
+            to_string_tag<RemainTag...>(_result, _tuple);
     }
 
     template<fix::TagName Name, IsTagTuple DataTuple>

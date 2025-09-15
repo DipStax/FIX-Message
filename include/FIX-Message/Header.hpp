@@ -58,9 +58,9 @@ namespace fix
             [[nodiscard]] inline std::optional<RejectError> verify_tag() const;
 
             template<class Tag, class ...RemainTag>
-            inline void to_string_positional(std::stringstream &_stream) const;
+            inline void to_string_positional(std::string &_result) const;
             template<class Tag, class ...RemainTag>
-            inline void to_string_tag(std::stringstream &_stream) const;
+            inline void to_string_tag(std::string &_result) const;
 
             std::tuple<std::pair<PosTags, bool>...> m_pos;
             std::tuple<Tags...> m_data;

@@ -8,6 +8,12 @@
 
 namespace fix
 {
+    template<class T>
+    concept IsIntegralNumber = std::is_integral_v<T>;
+
+    template<class T>
+    concept IsFloatingPointNumber = std::is_floating_point_v<T>;
+
     template<fix::TagName Name, class ...Tags>
     concept IsInListOf_Tag = !std::is_same_v<void, fix::meta::find_tag_from_name_t<Name, Tags...>>;
 

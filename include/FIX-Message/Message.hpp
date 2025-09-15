@@ -46,9 +46,9 @@ namespace fix
             [[nodiscard]] inline static std::optional<RejectError> verify_required_tag(const std::unordered_set<TagName> &_set);
 
             template<class Tag, class ...RemainTag>
-            inline void to_string_tag(std::stringstream &_stream) const;
+            inline void to_string_tag(std::string &_result) const;
             template<class TagList, class ...RemainTagList>
-            inline void to_string_list(std::stringstream &_stream) const;
+            inline void to_string_list(std::string &_result) const;
 
             std::tuple<Tags...> m_tags;
             std::tuple<TagLists...> m_taglists;

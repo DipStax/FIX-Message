@@ -1,4 +1,5 @@
 #include "Tag.hpp"
+#include "TagConvertor.hpp"
 
 #include "FIX-Message/Header.hpp"
 
@@ -40,7 +41,7 @@ TEST_F(Header_serialization_nononpositional, simple)
 
     const std::string result = std::format("{}={}\1", Tag1, value1)
         + std::format("{}={}\1", Tag2, value2)
-        + std::format("{}={:.4f}\1", Tag3, value3)
+        + std::format("{}={:.3f}\1", Tag3, value3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 

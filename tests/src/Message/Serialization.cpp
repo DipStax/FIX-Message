@@ -1,4 +1,5 @@
 #include "Tag.hpp"
+#include "TagConvertor.hpp"
 
 #include "FIX-Message/Message.hpp"
 
@@ -36,7 +37,7 @@ TEST_F(Message_serialization_nooptional, normal)
 
     const std::string result = std::format("{}={}\1", Tag1, value1)
         + std::format("{}={}\1", Tag2, value2)
-        + std::format("{}={:.4f}\1", Tag3, value3)
+        + std::format("{}={:.3f}\1", Tag3, value3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 
@@ -73,7 +74,7 @@ TEST_F(Message_serialization_optional, no_empty_value)
 
     const std::string result = std::format("{}={}\1", Tag1, value1)
         + std::format("{}={}\1", Tag2, value2)
-        + std::format("{}={:.4f}\1", Tag3, value3)
+        + std::format("{}={:.3f}\1", Tag3, value3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 

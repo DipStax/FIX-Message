@@ -18,6 +18,7 @@ namespace fix
     template<fix::TagName Name, bool IsOptional>
     struct TagNo : Tag<Name, std::conditional_t<IsOptional, std::optional<int>, int>>
     {
+        static constexpr const bool Optional = IsOptional;
     };
 
     template<class ...TagLists>
