@@ -2,12 +2,18 @@
 
 #include <concepts>
 
-#include "meta/find_tag.hpp"
-#include "meta/is_optional.hpp"
-#include "meta/is_tag_tuple.hpp"
+#include "FIX-Message/meta/find_tag.hpp"
+#include "FIX-Message/meta/is_optional.hpp"
+#include "FIX-Message/meta/is_tag_tuple.hpp"
 
 namespace fix
 {
+    template<class T>
+    concept IsIntegralNumber = std::is_integral_v<T>;
+
+    template<class T>
+    concept IsFloatingPointNumber = std::is_floating_point_v<T>;
+
     template<fix::TagName Name, class ...Tags>
     concept IsInListOf_Tag = !std::is_same_v<void, fix::meta::find_tag_from_name_t<Name, Tags...>>;
 

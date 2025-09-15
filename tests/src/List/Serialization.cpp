@@ -1,4 +1,7 @@
-#include "List.hpp"
+#include "TagConvertor.hpp"
+#include "Tag.hpp"
+
+#include "FIX-Message/List.hpp"
 
 #include <gtest/gtest.h>
 
@@ -7,15 +10,8 @@
 class List_serialization_nooptional : public testing::Test
 {
     public:
-        static constexpr const char TagRef[] = "0";
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
-        static constexpr const char Tag5[] = "5";
-
         using List = fix::List<
-            fix::TagNo<TagRef, true>,
+            fix::TagNo<TagRef, false>,
             fix::Tag<Tag1, std::string>,
             fix::Tag<Tag2, int>,
             fix::Tag<Tag3, float>,
@@ -28,7 +24,7 @@ TEST_F(List_serialization_nooptional, single_list)
 {
     List list{};
     List::DataTuple tuple{};
-    std::stringstream stream{};
+    std::string output{};
 
     const std::string value1 = "string";
     const int value2 = 123456798;
@@ -46,13 +42,12 @@ TEST_F(List_serialization_nooptional, single_list)
     const std::string result = std::format("{}={}\1", TagRef, 1)
         + std::format("{}={}\1", Tag1, value1)
         + std::format("{}={}\1", Tag2, value2)
-        + std::format("{}={:.4f}\1", Tag3, value3)
+        + std::format("{}={:.3f}\1", Tag3, value3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 
-    stream << std::fixed << std::setprecision(4);
-    list.to_string(stream);
-    EXPECT_EQ(stream.str(), result);
+    list.to_string(output);
+    EXPECT_EQ(output, result);
 }
 
 TEST_F(List_serialization_nooptional, multi_list)
@@ -60,7 +55,7 @@ TEST_F(List_serialization_nooptional, multi_list)
     List list{};
     List::DataTuple tuple1{};
     List::DataTuple tuple2{};
-    std::stringstream stream{};
+    std::string output{};
 
     const std::string value1_1 = "string1";
     const int value1_2 = 123456798;
@@ -92,29 +87,23 @@ TEST_F(List_serialization_nooptional, multi_list)
     const std::string result = std::format("{}={}\1", TagRef, 2)
         + std::format("{}={}\1", Tag1, value1_1)
         + std::format("{}={}\1", Tag2, value1_2)
-        + std::format("{}={:.4f}\1", Tag3, value1_3)
+        + std::format("{}={:.3f}\1", Tag3, value1_3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value1_4))
         + std::format("{}={}\1", Tag5, value1_5)
         + std::format("{}={}\1", Tag1, value2_1)
         + std::format("{}={}\1", Tag2, value2_2)
-        + std::format("{}={:.4f}\1", Tag3, value2_3)
+        + std::format("{}={:.3f}\1", Tag3, value2_3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value2_4))
         + std::format("{}={}\1", Tag5, value2_5);
 
 
-    stream << std::fixed << std::setprecision(4);
-    list.to_string(stream);
-    EXPECT_EQ(stream.str(), result);
+    list.to_string(output);
+    EXPECT_EQ(output, result);
 }
 
 class List_serialization_optional : public testing::Test
 {
     public:
-        static constexpr const char TagRef[] = "0";
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-
         using List = fix::List<
             fix::TagNo<TagRef, true>,
             fix::Tag<Tag1, std::string>,
@@ -127,7 +116,7 @@ TEST_F(List_serialization_optional, single_list)
 {
     List list{};
     List::DataTuple tuple{};
-    std::stringstream stream{};
+    std::string output{};
 
     const std::string value1 = "string";
 
@@ -137,8 +126,8 @@ TEST_F(List_serialization_optional, single_list)
     const std::string result = std::format("{}={}\1", TagRef, 1)
         + std::format("{}={}\1", Tag1, value1);
 
-    list.to_string(stream);
-    EXPECT_EQ(stream.str(), result);
+    list.to_string(output);
+    EXPECT_EQ(output, result);
 }
 
 TEST_F(List_serialization_optional, multi_list_fullempty)
@@ -146,7 +135,7 @@ TEST_F(List_serialization_optional, multi_list_fullempty)
     List list{};
     List::DataTuple tuple1{};
     List::DataTuple tuple2{};
-    std::stringstream stream{};
+    std::string output{};
 
     const std::string value1_1 = "string1";
     const std::string value2_1 = "string2";
@@ -161,8 +150,8 @@ TEST_F(List_serialization_optional, multi_list_fullempty)
         + std::format("{}={}\1", Tag1, value1_1)
         + std::format("{}={}\1", Tag1, value2_1);
 
-    list.to_string(stream);
-    EXPECT_EQ(stream.str(), result);
+    list.to_string(output);
+    EXPECT_EQ(output, result);
 }
 
 TEST_F(List_serialization_optional, multi_list_withvalue)
@@ -170,7 +159,7 @@ TEST_F(List_serialization_optional, multi_list_withvalue)
     List list{};
     List::DataTuple tuple1{};
     List::DataTuple tuple2{};
-    std::stringstream stream{};
+    std::string output{};
 
     const std::string value1_1 = "string1";
     const int value1_2 = 123465789;
@@ -189,9 +178,8 @@ TEST_F(List_serialization_optional, multi_list_withvalue)
         + std::format("{}={}\1", Tag1, value1_1)
         + std::format("{}={}\1", Tag2, value1_2)
         + std::format("{}={}\1", Tag1, value2_1)
-        + std::format("{}={:.4f}\1", Tag3, value2_3);
+        + std::format("{}={:.3f}\1", Tag3, value2_3);
 
-    stream << std::fixed << std::setprecision(4);
-    list.to_string(stream);
-    EXPECT_EQ(stream.str(), result);
+    list.to_string(output);
+    EXPECT_EQ(output, result);
 }

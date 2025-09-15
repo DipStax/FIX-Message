@@ -1,4 +1,7 @@
-#include "Message.hpp"
+#include "Tag.hpp"
+#include "TagConvertor.hpp"
+
+#include "FIX-Message/Message.hpp"
 
 #include <gtest/gtest.h>
 
@@ -7,13 +10,6 @@
 class Message_serialization_nooptional : public testing::Test
 {
     public:
-        static constexpr const char TagRef[] = "0";
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
-        static constexpr const char Tag5[] = "5";
-
         using Message = fix::Message<'0',
             fix::Tag<Tag1, std::string>,
             fix::Tag<Tag2, int>,
@@ -41,7 +37,7 @@ TEST_F(Message_serialization_nooptional, normal)
 
     const std::string result = std::format("{}={}\1", Tag1, value1)
         + std::format("{}={}\1", Tag2, value2)
-        + std::format("{}={:.4f}\1", Tag3, value3)
+        + std::format("{}={:.3f}\1", Tag3, value3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 
@@ -51,13 +47,6 @@ TEST_F(Message_serialization_nooptional, normal)
 class Message_serialization_optional : public testing::Test
 {
     public:
-        static constexpr const char TagRef[] = "0";
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
-        static constexpr const char Tag5[] = "5";
-
         using Message = fix::Message<'0',
             fix::Tag<Tag1, std::string>,
             fix::Tag<Tag2, int>,
@@ -65,6 +54,8 @@ class Message_serialization_optional : public testing::Test
             fix::Tag<Tag4, std::optional<bool>>,
             fix::Tag<Tag5, char>
         >;
+
+        Message msg{};
 };
 
 TEST_F(Message_serialization_optional, no_empty_value)
@@ -75,8 +66,6 @@ TEST_F(Message_serialization_optional, no_empty_value)
     const bool value4 = true;
     const char value5 = 'c';
 
-    Message msg{};
-
     msg.get<Tag1>().Value = value1;
     msg.get<Tag2>().Value = value2;
     msg.get<Tag3>().Value = value3;
@@ -85,7 +74,7 @@ TEST_F(Message_serialization_optional, no_empty_value)
 
     const std::string result = std::format("{}={}\1", Tag1, value1)
         + std::format("{}={}\1", Tag2, value2)
-        + std::format("{}={:.4f}\1", Tag3, value3)
+        + std::format("{}={:.3f}\1", Tag3, value3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 
@@ -97,8 +86,6 @@ TEST_F(Message_serialization_optional, all_empty_value)
     const std::string value1 = "string";
     const int value2 = 123456789;
     const char value5 = 'c';
-
-    Message msg{};
 
     msg.get<Tag1>().Value = value1;
     msg.get<Tag2>().Value = value2;
@@ -117,8 +104,6 @@ TEST_F(Message_serialization_optional, mix_value)
     const int value2 = 123456789;
     const bool value4 = true;
     const char value5 = 'c';
-
-    Message msg{};
 
     msg.get<Tag1>().Value = value1;
     msg.get<Tag2>().Value = value2;

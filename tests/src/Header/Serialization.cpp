@@ -1,4 +1,7 @@
-#include "Header.hpp"
+#include "Tag.hpp"
+#include "TagConvertor.hpp"
+
+#include "FIX-Message/Header.hpp"
 
 #include <gtest/gtest.h>
 
@@ -7,12 +10,6 @@
 class Header_serialization_nononpositional : public testing::Test
 {
     public:
-        static constexpr const char Tag1[] = "1";
-        static constexpr const char Tag2[] = "2";
-        static constexpr const char Tag3[] = "3";
-        static constexpr const char Tag4[] = "4";
-        static constexpr const char Tag5[] = "5";
-
         using Header = fix::Header<
             fix::PositionalTag<
                 fix::Tag<Tag1, std::string>,
@@ -44,7 +41,7 @@ TEST_F(Header_serialization_nononpositional, simple)
 
     const std::string result = std::format("{}={}\1", Tag1, value1)
         + std::format("{}={}\1", Tag2, value2)
-        + std::format("{}={:.4f}\1", Tag3, value3)
+        + std::format("{}={:.3f}\1", Tag3, value3)
         + std::format("{}={}\1", Tag4, static_cast<int>(value4))
         + std::format("{}={}\1", Tag5, value5);
 

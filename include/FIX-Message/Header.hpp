@@ -39,6 +39,8 @@ namespace fix
             template<fix::TagName Name>
             [[nodiscard]] constexpr Tag<Name, meta::find_tagtype_t<Name, PosTags...>> &getPositional();
 
+            [[nodiscard]] std::optional<RejectError> verify() const;
+
         private:
             template<class Tag>
                 requires IsInListOf_Tag<Tag::tag, PosTags...>
@@ -48,14 +50,17 @@ namespace fix
             [[nodiscard]] constexpr const std::pair<Tag, bool> &internal_getPositional() const;
 
             template<class Tag, class ...RemainTag>
-            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_positional(const std::string &_key, const std::string &_value);
+            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_positional(TagName _key, const std::string &_value);
             template<class Tag, class ...RemainTag>
-            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_nonpositional(const std::string &_key, const std::string _value);
+            [[nodiscard]] inline xstd::Expected<bool, RejectError> try_insert_nonpositional(TagName _key, const std::string _value);
 
             template<class Tag, class ...RemainTag>
-            inline void to_string_positional(std::stringstream &_stream) const;
+            [[nodiscard]] inline std::optional<RejectError> verify_tag() const;
+
             template<class Tag, class ...RemainTag>
-            inline void to_string_tag(std::stringstream &_stream) const;
+            inline void to_string_positional(std::string &_result) const;
+            template<class Tag, class ...RemainTag>
+            inline void to_string_tag(std::string &_result) const;
 
             std::tuple<std::pair<PosTags, bool>...> m_pos;
             std::tuple<Tags...> m_data;

@@ -21,12 +21,12 @@ The positional field are parse in order and encaplusated over `fix::PositionaTag
 All the **positional** field must be required, but **non positional** can be optional.
 
 ```cpp
-constexpr const char BeginString[] = "8";
-constexpr const char BodyLength[] = "9";
-constexpr const char MsgType[] = "35";
-constexpr const char SenderCompID[] = "49";
-constexpr const char TargetCompID[] = "56";
-constexpr const char DeliverToCompID[] = "128";
+constexpr const fix::TagName BeginString = 8;
+constexpr const fix::TagName BodyLength = 9;
+constexpr const fix::TagName MsgType = 35;
+constexpr const fix::TagName SenderCompID = 49;
+constexpr const fix::TagName TargetCompID = 56;
+constexpr const fix::TagName DeliverToCompID = 128;
 
 using Header = fix::Header<
     // positional tag declaration
@@ -43,28 +43,23 @@ using Header = fix::Header<
 ```
 
 **Handling error:**
-If a field appears multiple times in the header, the library does **not** handle duplicates internally. It is up to the user to implement duplicate field handling logic externally. Same goes to a partial header, where a required field (**positional** or **non positional**) is missing, the library will **not** notify it.
 
-> In the futur a function `verify` will handle the verification of missing required field and will return a `fix::RejectError` if missing. Nothing will be done for duplicate data (see **design note** for more information)
+You can call the function `verify` to check if all the **positional** tag are present. For the **non positional** the library doesn't implement a verification system for duplicate or missing and should be handle by the user during parsing.
 
 To insert a field value into the header use the `try_insert` member function.
 It return `true` as a value from the `Expected`, if the field is part of the header otherwise `false`, this allow to know when the header end and parse the remaining of message later.
 If an error occured like a unknow tag the error message will be available as "unexpected".
 
 ```cpp
+constexpr const fix::TagName MessageSpecificTag = 1;
+
 Header header{};
 xstd::Expected<bool, fix::RejectError> reject{false};
 
-reject = header.try_insert(BeginString, "FIX4.2");           // true
-reject = header.try_insert(BodyLength, "123");               // ...
+reject = header.try_insert(BeginString, "FIX4.2");          // reject.has_value() == true & reject.value() == true
+reject = header.try_insert(BodyLength, "123");              // ...
 reject = header.try_insert(MsgType, "E");
-reject = header.try_insert("UnknowTag", "value");
-
-reject.has_error();                                          // true
-
-reject = header.try_insert(SenderCompID, "Sender");
-// ...
-reject = header.try_insert("MessageSpecificTag", "value")    // false
+reject = header.try_insert(MessageSpecificTag, "value");    // reject.has_value() == true & reject.value() == false
 ```
 
 **Design note:**
@@ -86,11 +81,11 @@ namespace fix42
 }
 
 // declare field
-constexpr const char OrderQty[] = "38";
-constexpr const char Symbol[] = "55";
-constexpr const char ListId[] = "66";
-constexpr const char NoOrders[] = "73";
-constexpr const char BidType[] = "394";
+constexpr const fix::TagName OrderQty = 38;
+constexpr const fix::TagName Symbol = 55;
+constexpr const fix::TagName ListId = 66;
+constexpr const fix::TagName NoOrders = 73;
+constexpr const fix::TagName BidType = 394;
 
 // Compose a message type
 using NewOrderList = fix::Message<fix42::NewOrderList,
@@ -116,13 +111,13 @@ To parse the message you need to provide a `std::vector<std::pair<std::string, s
 // Parse a FIX message string
 NewOrderList msg;
 std::optional<fix::RejectError> error = msg.from_string({
-    { ListId, "list_id" },
-    { NoOrder, "2" },           /* No Field */
-    { Symbol, "USD/EUR" },      /* list 1 */
-    { OrderQty, "3520.15" },    /* list 1 */
-    { Symbol, "YEN/EUR" },      /* list 2 */
-    { OrderQty, "524.36" },     /* list 2 */
-    { BidType, "1" }
+    { "66", "list_id" },
+    { "73", "2" },          /* No Field */
+    { "55", "USD/EUR" },    /* list 1 */
+    { "38", "3520.15" },    /* list 1 */
+    { "55", "YEN/EUR" },    /* list 2 */
+    { "38", "524.36" },     /* list 2 */
+    { "394", "1" }
 });
 
 if (error.has_value()) {
@@ -149,12 +144,14 @@ for (const auto &_tuple : msg.getList<NoOrder>()) {
 }
 
 // using accessor
-const auto &list = msg.getList<NoOrder>().TagNo.Value;
+const auto &list = msg.getList<NoOrder>();
 
 for (size_t it = 0; it < list.TagNo.Value; it++) {
-    std::cout << "\tSymbol: " << fix::get<Symbol>(list.at(it)).Value << "\n";
-    if (fix::get<Symbol>(_tuple).Value.has_value())
-        std::cout << "\tOrder Qty: " << fix::get<OrderQty>(list.at(it)).Value << "\n";
+    const auto &tuple = list.at(it);
+
+    std::cout << "\tSymbol: " << fix::get<Symbol>(tuple).Value << "\n";
+    if (fix::get<Symbol>(tuple).Value.has_value())
+        std::cout << "\tOrder Qty: " << fix::get<OrderQty>(tuple).Value << "\n";
 }
 ```
 
@@ -166,11 +163,19 @@ std::cout << msg.to_string() << std::endl;
 
 ## Tag Value Conversion
 
-For each type use in a message you need to have function `TagConvertor` that take a as parameter a `std::string` and a reference to the type you wan't to implement. This function will return an optional `RejectError` in case the conversion went wrong.
+For each type use in a message you need to have function `to_FIX` that take a as parameter a `std::string` and a reference to the type you wan't to implement. This function will return an optional `RejectError` in case the conversion went wrong.
 
 ```cpp
-std::optional<fix::RejectError> TagConvertor(const std::string &_value, int &_out);
+std::optional<fix::RejectError> from_FIX(const std::string &_value, int &_out);
 ```
+
+You also need a function `from_FIX` that will be use to convert to string the content of the `Header`/`Message`, using as parameter a reference to a `std::string` and then the type you wan't to convert.
+
+```cpp
+void to_FIX(std::string &_out, int _value);
+```
+
+> The library allow the use of reference on the `_value` (usefull for example in the case of `std::string`).
 
 ## Building & Testing
 
