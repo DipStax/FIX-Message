@@ -85,15 +85,27 @@ namespace fix
     }
 
     template<class RefTagNo, class ...Tags>
-    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::cbegin() const
+    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::begin() const
     {
         return m_data.begin();
     }
 
     template<class RefTagNo, class ...Tags>
-    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::cend() const
+    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::end() const
     {
         return m_data.end();
+    }
+
+    template<class RefTagNo, class ...Tags>
+    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::cbegin() const
+    {
+        return m_data.cbegin();
+    }
+
+    template<class RefTagNo, class ...Tags>
+    List<RefTagNo, Tags...>::const_iterator List<RefTagNo, Tags...>::cend() const
+    {
+        return m_data.cend();
     }
 
     template<class RefTagNo, class ...Tags>

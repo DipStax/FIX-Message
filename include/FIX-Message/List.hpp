@@ -39,6 +39,9 @@ namespace fix
 
             [[nodiscard]] iterator begin();
             [[nodiscard]] iterator end();
+            [[nodiscard]] const_iterator begin() const;
+            [[nodiscard]] const_iterator end() const;
+
 
             [[nodiscard]] const_iterator cbegin() const;
             [[nodiscard]] const_iterator cend() const;
