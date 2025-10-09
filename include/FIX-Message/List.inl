@@ -29,7 +29,7 @@ namespace fix
     }
 
     template<class RefTagNo, class ...Tags>
-    void List<RefTagNo, Tags...>::to_string(std::string &_result)
+    void List<RefTagNo, Tags...>::to_string(std::string &_result) const
     {
         if constexpr (TagNoType::Optional) {
             if (m_data.size() != 0) {
@@ -46,6 +46,12 @@ namespace fix
         }
         for (const DataTuple &_tuple : m_data)
             to_string_tag<Tags...>(_result, _tuple);
+    }
+
+    template<class RefTagNo, class ...Tags>
+    void List<RefTagNo, Tags...>::add(const DataTuple &_data)
+    {
+        m_data.push_back(_data);
     }
 
     template<class RefTagNo, class ...Tags>
@@ -198,7 +204,7 @@ namespace fix
 
     template<class RefTagNo, class ...Tags>
     template<class Tag, class ...RemainTag>
-    void List<RefTagNo, Tags...>::to_string_tag(std::string &_result, const DataTuple &_tuple)
+    void List<RefTagNo, Tags...>::to_string_tag(std::string &_result, const DataTuple &_tuple) const
     {
         if constexpr (IsOptional<typename Tag::ValueType>) {
             const typename Tag::ValueType &tag = fix::get<Tag::tag>(_tuple).Value;

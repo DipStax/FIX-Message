@@ -16,7 +16,7 @@ namespace fix
     };
 
     template<fix::TagName Name, bool IsOptional>
-    struct TagNo : Tag<Name, std::conditional_t<IsOptional, std::optional<uint16_t>, uint16_t>>
+    struct TagNo : Tag<Name, std::conditional_t<IsOptional, std::optional<fix::TagName>, fix::TagName>>
     {
         static constexpr const bool Optional = IsOptional;
     };

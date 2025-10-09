@@ -28,8 +28,9 @@ namespace fix
 
             std::optional<RejectError> from_string(const MapMessage &_mapmsg, size_t &_pos);
 
-            void to_string(std::string &_result);
+            void to_string(std::string &_result) const;
 
+            void add(const DataTuple &_data);
             void add(DataTuple &&_data);
 
             [[nodiscard]] constexpr const DataTuple &at(size_t _idx) const;
@@ -54,7 +55,7 @@ namespace fix
             inline static std::optional<RejectError> verify_required_tag(const std::unordered_set<TagName> &_set);
 
             template<class Tag, class ...RemainTag>
-            inline void to_string_tag(std::string &_result, const DataTuple &_tuple);
+            inline void to_string_tag(std::string &_result, const DataTuple &_tuple) const;
 
             DataContainer m_data;
     };

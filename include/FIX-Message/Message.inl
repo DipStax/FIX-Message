@@ -234,7 +234,7 @@ namespace fix
     template<class TagList, class ...RemainTagList>
     void Message<MsgType, fix::TagList<TagLists...>, Tags...>::to_string_list(std::string &_result) const
     {
-        getList<TagList>().to_string(_result);
+        getList<TagList::tagno>().to_string(_result);
         if constexpr (sizeof...(RemainTagList) > 0)
             to_string_list<RemainTagList...>(_result);
     }
